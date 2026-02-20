@@ -1,5 +1,16 @@
 # ThreadsVault
 
+<img width="400" height="400" alt="ThreadsVault-icon" src="https://github.com/user-attachments/assets/1e871a24-469d-4d54-bb55-44b1f519ddf1" />
+
+[![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2B2D42?logo=kotlin&logoColor=A97BFF)](https://kotlinlang.org/)
+[![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![PBL](https://img.shields.io/badge/Methodology-PBL-0A7EA4)](#)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Claude Code](https://img.shields.io/badge/Assistant-Claude%20Code-D97706)](https://www.anthropic.com/claude-code)
+[![Codex](https://img.shields.io/badge/Assistant-Codex-111827)](https://openai.com/)
+
+
 <p align="left">
   <a href="./README_spanish-version.md">Leer en espanol</a>
 </p>
