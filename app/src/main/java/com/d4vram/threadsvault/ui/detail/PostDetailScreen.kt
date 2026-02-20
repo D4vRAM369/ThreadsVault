@@ -34,6 +34,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import coil.compose.AsyncImage
 import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.utils.MediaSaveUtils
@@ -88,8 +90,7 @@ fun PostDetailScreen(uiState: PostDetailUiState) {
                         .fillMaxSize()
                         .padding(padding)
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
-                    ,
+                        .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
@@ -102,7 +103,8 @@ fun PostDetailScreen(uiState: PostDetailUiState) {
                     )
                     Surface(
                         tonalElevation = 1.dp,
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             text = uiState.post.url,
@@ -129,6 +131,7 @@ fun PostDetailScreen(uiState: PostDetailUiState) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 140.dp, max = 420.dp)
+                                .clip(RoundedCornerShape(14.dp))
                                 .clickable { showImageViewer = true }
                         )
                     }

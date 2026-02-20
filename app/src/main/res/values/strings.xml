@@ -1,9 +1,12 @@
 <resources>
     <string name="app_name">ThreadsVault</string>
     <string name="settings_title">Ajustes</string>
+    <string name="back_action">Volver</string>
     <string name="search_label">Buscar en la boveda</string>
+    <string name="open_settings_action">Abrir ajustes</string>
     <string name="state_loading">Cargando...</string>
     <string name="state_empty">Tu boveda aun esta vacia</string>
+    <string name="state_empty_title">Boveda lista para empezar</string>
     <string name="favorite_toggle">Cambiar favorito</string>
     <string name="delete_action">Borrar post</string>
     <string name="manual_add_placeholder">Agregar manualmente</string>

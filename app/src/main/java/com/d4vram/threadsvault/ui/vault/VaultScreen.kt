@@ -15,21 +15,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
@@ -49,6 +58,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,6 +72,9 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.d4vram.threadsvault.R
@@ -88,6 +102,7 @@ fun VaultScreen(
     onDeleteCategory: (CategoryEntity) -> Unit,
     onOpenPost: (Long) -> Unit,
     onSearchAction: () -> Unit,
+    onOpenSettings: () -> Unit,
     onManualAdd: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -135,6 +150,12 @@ fun VaultScreen(
                             contentDescription = stringResource(id = R.string.search_label)
                         )
                     }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = stringResource(id = R.string.open_settings_action)
+                        )
+                    }
                 }
             )
         },
@@ -165,64 +186,83 @@ fun VaultScreen(
                 leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) }
             )
             Spacer(modifier = Modifier.size(12.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                item {
-                    FilterCategoryChip(
-                        label = stringResource(id = R.string.category_all),
-                        selected = selectedCategory == null,
-                        onClick = { onSelectCategory(null) }
-                    )
-                }
-                items(categories, key = { it.id }) { category ->
-                    FilterCategoryChip(
-                        label = listOf(category.emoji, category.nombre).filter { it.isNotBlank() }.joinToString(" "),
-                        selected = selectedCategory == category.nombre,
-                        onClick = { onSelectCategory(category.nombre) },
-                        onLongClick = {
-                            if (!category.nombre.equals("Sin categoria", ignoreCase = true) &&
-                                !category.nombre.equals("Sin categoría", ignoreCase = true)
-                            ) {
-                                pendingCategoryDelete = category
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp)
+                ) {
+                    item {
+                        FilterCategoryChip(
+                            label = stringResource(id = R.string.category_all),
+                            selected = selectedCategory == null,
+                            onClick = { onSelectCategory(null) }
+                        )
+                    }
+                    items(categories, key = { it.id }) { category ->
+                        FilterCategoryChip(
+                            label = listOf(category.emoji, category.nombre).filter { it.isNotBlank() }.joinToString(" "),
+                            selected = selectedCategory == category.nombre,
+                            onClick = { onSelectCategory(category.nombre) },
+                            onLongClick = {
+                                if (!category.nombre.equals("Sin categoria", ignoreCase = true) &&
+                                    !category.nombre.equals("Sin categoría", ignoreCase = true)
+                                ) {
+                                    pendingCategoryDelete = category
+                                }
                             }
-                        }
-                    )
-                }
-                item {
-                    FilterCategoryChip(
-                        label = stringResource(id = R.string.add_category_short),
-                        selected = false,
-                        onClick = { showAddCategoryDialog = true }
-                    )
+                        )
+                    }
+                    item {
+                        FilterCategoryChip(
+                            label = stringResource(id = R.string.add_category_short),
+                            selected = false,
+                            onClick = { showAddCategoryDialog = true }
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.size(12.dp))
 
-            when (uiState) {
-                is VaultUiState.Loading -> {
-                    Text(text = stringResource(id = R.string.state_loading))
-                }
-                is VaultUiState.Empty -> {
-                    Text(text = stringResource(id = R.string.state_empty))
-                }
-                is VaultUiState.Error -> {
-                    Text(text = uiState.message)
-                }
-                is VaultUiState.Success -> {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(uiState.posts, key = { it.id }) { post ->
-                            PostCard(
-                                post = post,
-                                onToggleFavorito = { onToggleFavorito(post) },
-                                onDelete = {
-                                    onDeletePost(post)
-                                    pendingDeleted = post
-                                },
-                                onEditNotes = { editNotesPost = post },
-                                onEditCategories = { editCategoriesPost = post },
-                                onCopyUrl = { pendingCopiedUrl = it },
-                                onRetryExtraction = { onRetryExtraction(post) },
-                                onOpen = { onOpenPost(post.id) }
-                            )
+            Crossfade(
+                targetState = uiState,
+                animationSpec = tween(durationMillis = 220),
+                label = "vault_state_crossfade"
+            ) { state ->
+                when (state) {
+                    is VaultUiState.Loading -> {
+                        Text(text = stringResource(id = R.string.state_loading))
+                    }
+                    is VaultUiState.Empty -> {
+                        EmptyVaultState(
+                            onManualAdd = onManualAdd
+                        )
+                    }
+                    is VaultUiState.Error -> {
+                        Text(text = state.message)
+                    }
+                    is VaultUiState.Success -> {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 120.dp)
+                        ) {
+                            items(state.posts, key = { it.id }) { post ->
+                                PostCard(
+                                    post = post,
+                                    onToggleFavorito = { onToggleFavorito(post) },
+                                    onDelete = {
+                                        onDeletePost(post)
+                                        pendingDeleted = post
+                                    },
+                                    onEditNotes = { editNotesPost = post },
+                                    onEditCategories = { editCategoriesPost = post },
+                                    onCopyUrl = { pendingCopiedUrl = it },
+                                    onRetryExtraction = { onRetryExtraction(post) },
+                                    onOpen = { onOpenPost(post.id) }
+                                )
+                            }
                         }
                     }
                 }
@@ -292,6 +332,35 @@ fun VaultScreen(
     }
 }
 
+@Composable
+private fun EmptyVaultState(
+    onManualAdd: () -> Unit
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null
+                )
+                Text(text = stringResource(id = R.string.state_empty_title))
+            }
+            Text(text = stringResource(id = R.string.state_empty))
+            Button(onClick = onManualAdd) {
+                Text(text = stringResource(id = R.string.manual_add_placeholder))
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FilterCategoryChip(
@@ -335,34 +404,41 @@ private fun PostCard(
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
+            .animateContentSize()
             .clickable(onClick = onOpen),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = RoundedCornerShape(20.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
                     text = post.autor.ifBlank { "@unknown" },
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = formatRelativeDate(post.fechaGuardado),
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.alpha(0.85f)
                 )
             }
             Text(
                 text = post.contenido.ifBlank { stringResource(id = R.string.no_content_text) },
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.alpha(0.95f)
             )
             Surface(
                 tonalElevation = 1.dp,
-                color = MaterialTheme.colorScheme.surfaceVariant
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = post.url,
@@ -370,7 +446,7 @@ private fun PostCard(
                         .fillMaxWidth()
                         .padding(8.dp),
                     style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -381,19 +457,26 @@ private fun PostCard(
                         contentDescription = stringResource(id = R.string.preview_image_content_desc),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .aspectRatio(16f / 9f)
+                            .clip(RoundedCornerShape(14.dp))
                     )
                     if (MediaUrlUtils.isVideoUrl(post.imagenPath)) {
                         Surface(
                             modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(8.dp),
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                            shape = MaterialTheme.shapes.small
+                                .align(Alignment.Center)
+                                .size(42.dp),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
+                            shape = RoundedCornerShape(21.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null
-                            )
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = null
+                                )
+                            }
                         }
                     }
                 }
@@ -425,6 +508,12 @@ private fun PostCard(
                         onDismissRequest = { menuExpanded = false }
                     ) {
                         DropdownMenuItem(
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.EditNote,
+                                    contentDescription = null
+                                )
+                            },
                             text = { Text(text = stringResource(id = R.string.edit_notes_action)) },
                             onClick = {
                                 menuExpanded = false
@@ -432,6 +521,12 @@ private fun PostCard(
                             }
                         )
                         DropdownMenuItem(
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Label,
+                                    contentDescription = null
+                                )
+                            },
                             text = { Text(text = stringResource(id = R.string.assign_categories_action)) },
                             onClick = {
                                 menuExpanded = false
@@ -439,6 +534,12 @@ private fun PostCard(
                             }
                         )
                         DropdownMenuItem(
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = null
+                                )
+                            },
                             text = { Text(text = stringResource(id = R.string.copy_url_action)) },
                             onClick = {
                                 menuExpanded = false
@@ -447,6 +548,12 @@ private fun PostCard(
                             }
                         )
                         DropdownMenuItem(
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = null
+                                )
+                            },
                             text = { Text(text = stringResource(id = R.string.retry_extraction_action)) },
                             onClick = {
                                 menuExpanded = false
@@ -454,6 +561,12 @@ private fun PostCard(
                             }
                         )
                         DropdownMenuItem(
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null
+                                )
+                            },
                             text = { Text(text = stringResource(id = R.string.delete_action)) },
                             onClick = {
                                 menuExpanded = false
@@ -597,3 +710,4 @@ private fun formatRelativeDate(timestamp: Long): String {
         DateUtils.MINUTE_IN_MILLIS
     ).toString()
 }
+

@@ -130,6 +130,7 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate("${AppRoute.DETAIL}/$postId")
                             },
                             onSearchAction = {},
+                            onOpenSettings = { navController.navigate(AppRoute.SETTINGS) },
                             onManualAdd = { showManualAdd = true }
                         )
                     }
@@ -147,6 +148,7 @@ class MainActivity : ComponentActivity() {
                     composable(AppRoute.SETTINGS) {
                         SettingsScreen(
                             title = stringResource(id = R.string.settings_title),
+                            onBack = { navController.popBackStack() },
                             themeMode = themeMode,
                             autoBackupFolderUri = autoBackupFolderUri,
                             autoBackupIntervalHours = autoBackupIntervalHours,
