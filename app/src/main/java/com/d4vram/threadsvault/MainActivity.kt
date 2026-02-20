@@ -17,7 +17,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.NavHost
@@ -25,9 +27,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import com.d4vram.threadsvault.data.preferences.AppPreferences
 import com.d4vram.threadsvault.ui.about.AboutDevScreen
 import com.d4vram.threadsvault.ui.detail.PostDetailScreen
 import com.d4vram.threadsvault.ui.detail.PostDetailViewModel
+import com.d4vram.threadsvault.ui.onboarding.OnboardingScreen
 import com.d4vram.threadsvault.ui.settings.SettingsViewModel
 import com.d4vram.threadsvault.ui.settings.SaveDocumentRequest
 import com.d4vram.threadsvault.ui.vault.VaultScreen
@@ -43,6 +47,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
+            val scope = rememberCoroutineScope()
+            val appPreferences = remember { AppPreferences(applicationContext) }
+            val hasSeenOnboarding by appPreferences.hasSeenOnboardingFlow.collectAsState(initial = null)
             val navController = rememberNavController()
             val vaultViewModel = remember { VaultViewModel(applicationContext) }
             val settingsViewModel = remember { SettingsViewModel(applicationContext) }
@@ -112,7 +119,22 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                NavHost(startDestination = AppRoute.VAULT, navController = navController) {
+                // null = still loading from DataStore; don't render yet (splash covers it)
+                if (hasSeenOnboarding == null) return@ThreadsVaultTheme
+
+                val startDestination = if (hasSeenOnboarding == true) AppRoute.VAULT else AppRoute.ONBOARDING
+
+                NavHost(startDestination = startDestination, navController = navController) {
+                    composable(AppRoute.ONBOARDING) {
+                        OnboardingScreen(
+                            onFinish = {
+                                scope.launch { appPreferences.setHasSeenOnboarding(true) }
+                                navController.navigate(AppRoute.VAULT) {
+                                    popUpTo(AppRoute.ONBOARDING) { inclusive = true }
+                                }
+                            }
+                        )
+                    }
                     composable(AppRoute.VAULT) {
                         VaultScreen(
                             title = stringResource(id = R.string.app_name),
@@ -233,6 +255,7 @@ private fun ManualAddDialog(
 }
 
 private object AppRoute {
+    const val ONBOARDING = "onboarding"
     const val VAULT = "vault"
     const val DETAIL = "detail"
     const val SETTINGS = "settings"

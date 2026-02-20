@@ -1,6 +1,7 @@
 package com.d4vram.threadsvault.data.preferences
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -28,6 +29,9 @@ class AppPreferences(private val context: Context) {
     val autoBackupIntervalHoursFlow: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[Keys.AUTO_BACKUP_INTERVAL_HOURS] ?: 24
     }
+    val hasSeenOnboardingFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[Keys.HAS_SEEN_ONBOARDING] ?: false
+    }
 
     suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { preferences ->
@@ -45,6 +49,12 @@ class AppPreferences(private val context: Context) {
         }
     }
 
+    suspend fun setHasSeenOnboarding(seen: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[Keys.HAS_SEEN_ONBOARDING] = seen
+        }
+    }
+
     suspend fun setAutoBackupIntervalHours(hours: Int) {
         val normalized = if (hours <= 12) 12 else 24
         context.dataStore.edit { preferences ->
@@ -56,5 +66,6 @@ class AppPreferences(private val context: Context) {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val AUTO_BACKUP_FOLDER_URI = stringPreferencesKey("auto_backup_folder_uri")
         val AUTO_BACKUP_INTERVAL_HOURS = intPreferencesKey("auto_backup_interval_hours")
+        val HAS_SEEN_ONBOARDING = booleanPreferencesKey("has_seen_onboarding")
     }
 }
