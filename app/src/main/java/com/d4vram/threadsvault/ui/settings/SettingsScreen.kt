@@ -18,9 +18,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.Composable
@@ -38,6 +40,8 @@ import com.d4vram.threadsvault.data.preferences.ThemeMode
 fun SettingsScreen(
     title: String,
     themeMode: ThemeMode,
+    autoBackupFolderUri: String?,
+    autoBackupIntervalHours: Int,
     categories: List<CategoryEntity>,
     onThemeModeChange: (ThemeMode) -> Unit,
     onAddCategory: (String, String) -> Unit,
@@ -45,10 +49,16 @@ fun SettingsScreen(
     onExportCsv: () -> Unit,
     onExportPdf: () -> Unit,
     onBackupJson: () -> Unit,
-    onRestoreJson: () -> Unit
+    onRestoreJson: () -> Unit,
+    onBackupCsv: () -> Unit,
+    onRestoreCsv: () -> Unit,
+    onPickAutoBackupFolder: () -> Unit,
+    onAutoBackupIntervalChange: (Int) -> Unit,
+    onClearAutoBackupFolder: () -> Unit
 ) {
     var newCategory by remember { mutableStateOf("") }
     var newCategoryEmoji by remember { mutableStateOf("") }
+    var showRestoreConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -138,11 +148,71 @@ fun SettingsScreen(
                 Button(onClick = onBackupJson) {
                     Text(text = stringResource(id = R.string.backup_json_action))
                 }
-                Button(onClick = onRestoreJson) {
+                Button(onClick = { showRestoreConfirm = true }) {
                     Text(text = stringResource(id = R.string.restore_json_action))
                 }
             }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onBackupCsv) {
+                    Text(text = stringResource(id = R.string.backup_csv_action))
+                }
+                Button(onClick = onRestoreCsv) {
+                    Text(text = stringResource(id = R.string.restore_csv_action))
+                }
+            }
+
+            Text(text = stringResource(id = R.string.auto_backup_title))
+            Text(
+                text = if (autoBackupFolderUri.isNullOrBlank()) {
+                    stringResource(id = R.string.auto_backup_folder_missing)
+                } else {
+                    stringResource(id = R.string.auto_backup_folder_configured)
+                }
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onPickAutoBackupFolder) {
+                    Text(text = stringResource(id = R.string.select_saf_folder_action))
+                }
+                Button(onClick = onClearAutoBackupFolder) {
+                    Text(text = stringResource(id = R.string.clear_saf_folder_action))
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                RadioButton(
+                    selected = autoBackupIntervalHours <= 12,
+                    onClick = { onAutoBackupIntervalChange(12) }
+                )
+                Text(text = stringResource(id = R.string.auto_backup_12h))
+                RadioButton(
+                    selected = autoBackupIntervalHours > 12,
+                    onClick = { onAutoBackupIntervalChange(24) }
+                )
+                Text(text = stringResource(id = R.string.auto_backup_24h))
+            }
         }
+    }
+
+    if (showRestoreConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRestoreConfirm = false },
+            title = { Text(text = stringResource(id = R.string.restore_confirm_title)) },
+            text = { Text(text = stringResource(id = R.string.restore_confirm_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRestoreConfirm = false
+                        onRestoreJson()
+                    }
+                ) {
+                    Text(text = stringResource(id = R.string.restore_json_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestoreConfirm = false }) {
+                    Text(text = stringResource(id = R.string.cancel_action))
+                }
+            }
+        )
     }
 }
 

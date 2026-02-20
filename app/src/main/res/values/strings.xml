@@ -18,6 +18,8 @@
     <string name="more_actions">Mas acciones</string>
     <string name="edit_notes_action">Editar notas</string>
     <string name="assign_categories_action">Asignar categorias</string>
+    <string name="copy_url_action">Copiar URL</string>
+    <string name="url_copied_message">URL copiada al portapapeles</string>
     <string name="save_action">Guardar</string>
     <string name="undo_action">Deshacer</string>
     <string name="post_deleted_message">Post eliminado</string>
@@ -45,6 +47,17 @@
     <string name="backup_title">Backup y restore</string>
     <string name="backup_json_action">Crear backup JSON</string>
     <string name="restore_json_action">Restaurar JSON</string>
+    <string name="backup_csv_action">Crear backup CSV</string>
+    <string name="restore_csv_action">Restaurar CSV</string>
+    <string name="auto_backup_title">Autobackup (SAF)</string>
+    <string name="auto_backup_folder_missing">Sin carpeta SAF configurada.</string>
+    <string name="auto_backup_folder_configured">Carpeta SAF configurada para autobackup.</string>
+    <string name="select_saf_folder_action">Elegir carpeta SAF</string>
+    <string name="clear_saf_folder_action">Quitar carpeta</string>
+    <string name="auto_backup_12h">Cada 12h</string>
+    <string name="auto_backup_24h">Cada 24h</string>
+    <string name="restore_confirm_title">Confirmar restore</string>
+    <string name="restore_confirm_message">Esta accion reemplazara tu boveda local actual. Continuar?</string>
     <string name="download_image_title">Descargar imagen</string>
     <string name="download_image_message">Mantener pulsado permite guardar en galeria.</string>
     <string name="download_action">Descargar</string>

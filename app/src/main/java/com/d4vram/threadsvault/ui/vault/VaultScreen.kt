@@ -57,7 +57,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -94,8 +96,10 @@ fun VaultScreen(
     var editCategoriesPost by remember { mutableStateOf<PostEntity?>(null) }
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var pendingCategoryDelete by remember { mutableStateOf<CategoryEntity?>(null) }
+    var pendingCopiedUrl by remember { mutableStateOf<String?>(null) }
     val deletedMessage = stringResource(id = R.string.post_deleted_message)
     val undoLabel = stringResource(id = R.string.undo_action)
+    val copiedMessage = stringResource(id = R.string.url_copied_message)
 
     LaunchedEffect(pendingDeleted) {
         val deleted = pendingDeleted ?: return@LaunchedEffect
@@ -108,6 +112,13 @@ fun VaultScreen(
             onRestorePost(deleted)
         }
         pendingDeleted = null
+    }
+    LaunchedEffect(pendingCopiedUrl) {
+        val copied = pendingCopiedUrl ?: return@LaunchedEffect
+        if (copied.isNotBlank()) {
+            snackbarHostState.showSnackbar(message = copiedMessage, duration = SnackbarDuration.Short)
+        }
+        pendingCopiedUrl = null
     }
 
     Scaffold(
@@ -208,6 +219,7 @@ fun VaultScreen(
                                 },
                                 onEditNotes = { editNotesPost = post },
                                 onEditCategories = { editCategoriesPost = post },
+                                onCopyUrl = { pendingCopiedUrl = it },
                                 onRetryExtraction = { onRetryExtraction(post) },
                                 onOpen = { onOpenPost(post.id) }
                             )
@@ -313,10 +325,12 @@ private fun PostCard(
     onDelete: () -> Unit,
     onEditNotes: () -> Unit,
     onEditCategories: () -> Unit,
+    onCopyUrl: (String) -> Unit,
     onRetryExtraction: () -> Unit,
     onOpen: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val clipboardManager = LocalClipboardManager.current
 
     ElevatedCard(
         modifier = Modifier
@@ -422,6 +436,14 @@ private fun PostCard(
                             onClick = {
                                 menuExpanded = false
                                 onEditCategories()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.copy_url_action)) },
+                            onClick = {
+                                menuExpanded = false
+                                clipboardManager.setText(AnnotatedString(post.url))
+                                onCopyUrl(post.url)
                             }
                         )
                         DropdownMenuItem(

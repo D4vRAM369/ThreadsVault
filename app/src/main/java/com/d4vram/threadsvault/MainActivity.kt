@@ -1,6 +1,5 @@
 package com.d4vram.threadsvault
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -28,6 +27,7 @@ import androidx.navigation.NavType
 import com.d4vram.threadsvault.ui.detail.PostDetailScreen
 import com.d4vram.threadsvault.ui.detail.PostDetailViewModel
 import com.d4vram.threadsvault.ui.settings.SettingsViewModel
+import com.d4vram.threadsvault.ui.settings.SaveDocumentRequest
 import com.d4vram.threadsvault.ui.vault.VaultScreen
 import com.d4vram.threadsvault.ui.vault.VaultViewModel
 import com.d4vram.threadsvault.ui.settings.SettingsScreen
@@ -49,7 +49,10 @@ class MainActivity : ComponentActivity() {
             val selectedCategory by vaultViewModel.currentCategory.collectAsState()
             val themeMode by settingsViewModel.themeMode.collectAsState()
             val settingsCategories by settingsViewModel.categories.collectAsState()
+            val autoBackupFolderUri by settingsViewModel.autoBackupFolderUri.collectAsState()
+            val autoBackupIntervalHours by settingsViewModel.autoBackupIntervalHours.collectAsState()
             var showManualAdd by remember { mutableStateOf(false) }
+            var pendingSaveRequest by remember { mutableStateOf<SaveDocumentRequest?>(null) }
             val restoreLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.OpenDocument()
             ) { uri ->
@@ -57,16 +60,46 @@ class MainActivity : ComponentActivity() {
                     settingsViewModel.restoreJson(uri)
                 }
             }
+            val saveDocumentLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.CreateDocument("*/*")
+            ) { uri ->
+                val request = pendingSaveRequest
+                if (request != null) {
+                    settingsViewModel.saveDocumentToUri(request, uri)
+                } else if (uri == null) {
+                    Toast.makeText(context, "Guardado cancelado.", Toast.LENGTH_SHORT).show()
+                }
+                pendingSaveRequest = null
+            }
+            val restoreCsvLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.OpenDocument()
+            ) { uri ->
+                if (uri != null) {
+                    settingsViewModel.restoreCsv(uri)
+                }
+            }
+            val pickBackupFolderLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.OpenDocumentTree()
+            ) { uri ->
+                if (uri != null) {
+                    runCatching {
+                        contentResolver.takePersistableUriPermission(
+                            uri,
+                            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                    }
+                    settingsViewModel.setAutoBackupFolderUri(uri.toString())
+                } else {
+                    Toast.makeText(context, "Seleccion de carpeta cancelada.", Toast.LENGTH_SHORT).show()
+                }
+            }
 
             ThreadsVaultTheme(themeMode = themeMode) {
                 LaunchedEffect(settingsViewModel) {
-                    settingsViewModel.exportEvents.collectLatest { event ->
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = event.mimeType
-                            putExtra(Intent.EXTRA_STREAM, event.uri)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        }
-                        startActivity(Intent.createChooser(shareIntent, event.title))
+                    settingsViewModel.saveDocumentEvents.collectLatest { request ->
+                        pendingSaveRequest = request
+                        saveDocumentLauncher.launch(request.displayName)
                     }
                 }
                 LaunchedEffect(settingsViewModel) {
@@ -115,6 +148,8 @@ class MainActivity : ComponentActivity() {
                         SettingsScreen(
                             title = stringResource(id = R.string.settings_title),
                             themeMode = themeMode,
+                            autoBackupFolderUri = autoBackupFolderUri,
+                            autoBackupIntervalHours = autoBackupIntervalHours,
                             categories = settingsCategories,
                             onThemeModeChange = settingsViewModel::setThemeMode,
                             onAddCategory = settingsViewModel::addCategory,
@@ -124,7 +159,14 @@ class MainActivity : ComponentActivity() {
                             onBackupJson = settingsViewModel::backupJson,
                             onRestoreJson = {
                                 restoreLauncher.launch(arrayOf("application/json", "text/plain"))
-                            }
+                            },
+                            onBackupCsv = settingsViewModel::backupCsv,
+                            onRestoreCsv = {
+                                restoreCsvLauncher.launch(arrayOf("text/csv", "text/plain"))
+                            },
+                            onPickAutoBackupFolder = { pickBackupFolderLauncher.launch(null) },
+                            onAutoBackupIntervalChange = settingsViewModel::setAutoBackupIntervalHours,
+                            onClearAutoBackupFolder = { settingsViewModel.setAutoBackupFolderUri(null) }
                         )
                     }
                 }
