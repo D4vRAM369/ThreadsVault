@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Schedule
@@ -79,7 +80,8 @@ fun SettingsScreen(
     onRestoreCsv: () -> Unit,
     onPickAutoBackupFolder: () -> Unit,
     onAutoBackupIntervalChange: (Int) -> Unit,
-    onClearAutoBackupFolder: () -> Unit
+    onClearAutoBackupFolder: () -> Unit,
+    onOpenAboutDev: () -> Unit
 ) {
     var newCategory by remember { mutableStateOf("") }
     var newCategoryEmoji by remember { mutableStateOf("") }
@@ -339,6 +341,24 @@ fun SettingsScreen(
                         ) {
                             Text(text = stringResource(id = R.string.auto_backup_24h))
                         }
+                    }
+                }
+            }
+
+            item {
+                SectionCard(
+                    icon = Icons.Default.Info,
+                    title = stringResource(id = R.string.about_dev_title)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.about_dev_settings_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    FilledTonalButton(
+                        onClick = onOpenAboutDev
+                    ) {
+                        Text(text = stringResource(id = R.string.about_dev_action))
                     }
                 }
             }

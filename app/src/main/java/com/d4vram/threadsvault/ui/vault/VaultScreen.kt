@@ -50,8 +50,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -181,6 +179,13 @@ fun VaultScreen(
                     containerColor = MaterialTheme.colorScheme.background
                 ),
                 actions = {
+                    IconButton(onClick = onToggleFavoritesFilter) {
+                        Icon(
+                            imageVector = if (showFavoritesOnly) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = stringResource(id = R.string.favorites_filter_label),
+                            tint = if (showFavoritesOnly) VaultFavorite else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     IconButton(onClick = onSearchAction) {
                         Icon(
                             imageVector = Icons.Default.Search,
@@ -236,41 +241,10 @@ fun VaultScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(vertical = 6.dp)
                 ) {
-                    // Fixed favorites chip
-                    Spacer(modifier = Modifier.width(8.dp))
-                    FilterChip(
-                        selected = showFavoritesOnly,
-                        onClick = onToggleFavoritesFilter,
-                        label = {
-                            Text(
-                                text = stringResource(id = R.string.favorites_filter_label),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = if (showFavoritesOnly) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = VaultFavorite.copy(alpha = 0.15f),
-                            selectedLabelColor = VaultFavorite,
-                            selectedLeadingIconColor = VaultFavorite
-                        )
-                    )
-                    VerticalDivider(
-                        modifier = Modifier
-                            .height(28.dp)
-                            .padding(horizontal = 8.dp),
-                        thickness = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
                     // Scrollable categories
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(end = 8.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp)
                     ) {
                         item {
                             FilterCategoryChip(
@@ -333,7 +307,7 @@ fun VaultScreen(
                         }
                     }
                     is VaultUiState.Empty -> {
-                        EmptyVaultState(onManualAdd = onManualAdd)
+                        EmptyVaultState()
                     }
                     is VaultUiState.Error -> {
                         Box(
@@ -439,7 +413,6 @@ fun VaultScreen(
 
 @Composable
 private fun EmptyVaultState(
-    onManualAdd: () -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -469,11 +442,6 @@ private fun EmptyVaultState(
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onManualAdd) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = stringResource(id = R.string.manual_add_placeholder))
-            }
         }
     }
 }

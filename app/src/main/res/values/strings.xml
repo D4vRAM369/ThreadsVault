@@ -71,4 +71,13 @@
     <string name="section_appearance">Apariencia</string>
     <string name="notes_section_title">Notas</string>
     <string name="favorites_filter_label">Favoritos</string>
+    <string name="about_dev_title">Sobre el Dev</string>
+    <string name="about_dev_action">Abrir sobre el dev</string>
+    <string name="about_dev_settings_hint">Conoce el proyecto, su enfoque PBL y como apoyar al dev.</string>
+    <string name="about_dev_intro">Este proyecto ha sido creado por D4vRAM, para y por la comunidad open source, con amor ❤️.</string>
+    <string name="about_dev_pbl">Este proyecto ha sido creado mediante PBL usando a la IA como mentora en un proceso de aprendizaje constante, como lo es con cada proyecto que realizo. Transformando ideas y soluciones a problemas en codigo.</string>
+    <string name="about_dev_quote">"No usar la IA para programar hoy en dia es como ser agricultor y no querer usar el tractor."</string>
+    <string name="about_dev_github_action">Perfil de GitHub</string>
+    <string name="about_dev_star_action">Dame una estrella</string>
+    <string name="about_dev_coffee_action">Invitar un cafe</string>
 </resources>

@@ -7,8 +7,10 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+/.idea/deviceManager.xml
 .DS_Store
 /build
+/app/release/
 /captures
 .externalNativeBuild
 .cxx
@@ -20,3 +22,4 @@ local.properties
 threadsvault_database*
 threadsvault_ui.xml
 push_db.bat
+README.md.backup

@@ -71,4 +71,13 @@
     <string name="section_appearance">Appearance</string>
     <string name="notes_section_title">Notes</string>
     <string name="favorites_filter_label">Favorites</string>
+    <string name="about_dev_title">About the Dev</string>
+    <string name="about_dev_action">Open about the dev</string>
+    <string name="about_dev_settings_hint">Learn about the project, its PBL approach, and how to support the dev.</string>
+    <string name="about_dev_intro">This project was created by D4vRAM, for and by the open-source community, with love ❤️.</string>
+    <string name="about_dev_pbl">This project was built through PBL, using AI as a mentor in a constant learning process, as with every project I create. Transforming ideas and solutions to problems into code.</string>
+    <string name="about_dev_quote">"Not using AI to program nowadays is like being a farmer and refusing to use a tractor."</string>
+    <string name="about_dev_github_action">GitHub Profile</string>
+    <string name="about_dev_star_action">Give me a Star</string>
+    <string name="about_dev_coffee_action">Buy Me a Coffee</string>
 </resources>

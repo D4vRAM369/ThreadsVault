@@ -25,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import com.d4vram.threadsvault.ui.about.AboutDevScreen
 import com.d4vram.threadsvault.ui.detail.PostDetailScreen
 import com.d4vram.threadsvault.ui.detail.PostDetailViewModel
 import com.d4vram.threadsvault.ui.settings.SettingsViewModel
@@ -177,7 +178,13 @@ class MainActivity : ComponentActivity() {
                             },
                             onPickAutoBackupFolder = { pickBackupFolderLauncher.launch(null) },
                             onAutoBackupIntervalChange = settingsViewModel::setAutoBackupIntervalHours,
-                            onClearAutoBackupFolder = { settingsViewModel.setAutoBackupFolderUri(null) }
+                            onClearAutoBackupFolder = { settingsViewModel.setAutoBackupFolderUri(null) },
+                            onOpenAboutDev = { navController.navigate(AppRoute.ABOUT) }
+                        )
+                    }
+                    composable(AppRoute.ABOUT) {
+                        AboutDevScreen(
+                            onBack = { navController.popBackStack() }
                         )
                     }
                 }
@@ -229,4 +236,5 @@ private object AppRoute {
     const val VAULT = "vault"
     const val DETAIL = "detail"
     const val SETTINGS = "settings"
+    const val ABOUT = "about"
 }

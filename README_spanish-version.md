@@ -44,6 +44,20 @@ Pero los buenos posts se pierden rápido en la infinidad tras un autoscroll, y n
 - Autobackup con selección de carpeta SAF.
 - Tema claro, oscuro o sistema.
 
+## About the Dev
+
+This project was created by **D4vRAM**, for and by the open-source community, with love ❤️.
+This project was built through **PBL (Project-Based Learning)**, using AI as a mentor in a constant learning process, as it is with every project I create. Transforming ideas and solutions to problems into code.
+
+<sub><em>"Not using AI to program nowadays is like being a farmer and refusing to use a tractor."</em></sub>
+
+## Sobre el Dev
+
+Este proyecto ha sido creado por **D4vRAM**, para y por la comunidad open source, con amor ❤️.
+Este proyecto ha sido creado mediante **PBL (Aprendizaje Basado en Proyectos)**, usando a la IA como mentora en un proceso de aprendizaje constante, como lo es con cada proyecto que realizo. Transformando ideas y soluciones a problemas en código.
+
+<sub><em>"No usar la IA para programar hoy en día es como ser agricultor y no querer usar el tractor."</em></sub>
+
 ## Privacidad
 
 - Diseño local-first.
