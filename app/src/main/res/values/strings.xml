@@ -53,15 +53,18 @@
     <string name="backup_csv_action">Crear backup CSV</string>
     <string name="restore_csv_action">Restaurar CSV</string>
     <string name="auto_backup_title">Autobackup (SAF)</string>
-    <string name="auto_backup_folder_missing">Sin carpeta SAF configurada.</string>
-    <string name="auto_backup_folder_configured">Carpeta SAF configurada para autobackup.</string>
+    <string name="auto_backup_folder_missing">Sin carpeta SAF configurada</string>
+    <string name="auto_backup_folder_configured">Carpeta SAF configurada</string>
     <string name="select_saf_folder_action">Elegir carpeta SAF</string>
     <string name="clear_saf_folder_action">Quitar carpeta</string>
     <string name="auto_backup_12h">Cada 12h</string>
     <string name="auto_backup_24h">Cada 24h</string>
+    <string name="auto_backup_interval_label">Intervalo de autobackup</string>
     <string name="restore_confirm_title">Confirmar restore</string>
     <string name="restore_confirm_message">Esta accion reemplazara tu boveda local actual. Continuar?</string>
     <string name="download_image_title">Descargar imagen</string>
     <string name="download_image_message">Mantener pulsado permite guardar en galeria.</string>
     <string name="download_action">Descargar</string>
+    <string name="section_appearance">Apariencia</string>
+    <string name="notes_section_title">Notas</string>
 </resources>

@@ -2,6 +2,7 @@ package com.d4vram.threadsvault.ui.vault
 
 import android.text.format.DateUtils
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,31 +13,37 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AssistChip
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -55,9 +62,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
@@ -68,21 +78,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.database.entity.PostEntity
+import com.d4vram.threadsvault.ui.theme.VaultFavorite
 import com.d4vram.threadsvault.utils.MediaUrlUtils
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun VaultScreen(
     title: String,
@@ -142,18 +158,30 @@ fun VaultScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = title, style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
                 actions = {
                     IconButton(onClick = onSearchAction) {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = stringResource(id = R.string.search_label)
+                            contentDescription = stringResource(id = R.string.search_label),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = stringResource(id = R.string.open_settings_action)
+                            contentDescription = stringResource(id = R.string.open_settings_action),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -162,6 +190,8 @@ fun VaultScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onManualAdd,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 text = { Text(text = stringResource(id = R.string.manual_add_placeholder)) },
                 icon = {
                     Icon(
@@ -183,12 +213,13 @@ fun VaultScreen(
                 value = searchText,
                 onValueChange = onSearchTextChange,
                 label = { Text(text = stringResource(id = R.string.search_label)) },
-                leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) }
+                leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
+                shape = MaterialTheme.shapes.medium
             )
             Spacer(modifier = Modifier.size(12.dp))
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainer,
-                shape = RoundedCornerShape(16.dp)
+                shape = MaterialTheme.shapes.large
             ) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -233,15 +264,31 @@ fun VaultScreen(
             ) { state ->
                 when (state) {
                     is VaultUiState.Loading -> {
-                        Text(text = stringResource(id = R.string.state_loading))
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.state_loading),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                     is VaultUiState.Empty -> {
-                        EmptyVaultState(
-                            onManualAdd = onManualAdd
-                        )
+                        EmptyVaultState(onManualAdd = onManualAdd)
                     }
                     is VaultUiState.Error -> {
-                        Text(text = state.message)
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = state.message,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                     is VaultUiState.Success -> {
                         LazyColumn(
@@ -251,6 +298,7 @@ fun VaultScreen(
                             items(state.posts, key = { it.id }) { post ->
                                 PostCard(
                                     post = post,
+                                    modifier = Modifier.animateItemPlacement(),
                                     onToggleFavorito = { onToggleFavorito(post) },
                                     onDelete = {
                                         onDeletePost(post)
@@ -336,25 +384,37 @@ fun VaultScreen(
 private fun EmptyVaultState(
     onManualAdd: () -> Unit
 ) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(32.dp)
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = null
-                )
-                Text(text = stringResource(id = R.string.state_empty_title))
-            }
-            Text(text = stringResource(id = R.string.state_empty))
+            Icon(
+                imageVector = Icons.Outlined.Inventory2,
+                contentDescription = null,
+                modifier = Modifier.size(72.dp),
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+            )
+            Text(
+                text = stringResource(id = R.string.state_empty_title),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = stringResource(id = R.string.state_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = onManualAdd) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(text = stringResource(id = R.string.manual_add_placeholder))
             }
         }
@@ -370,7 +430,7 @@ private fun FilterCategoryChip(
     onLongClick: (() -> Unit)? = null
 ) {
     Surface(
-        shape = MaterialTheme.shapes.large,
+        shape = MaterialTheme.shapes.medium,
         tonalElevation = if (selected) 3.dp else 0.dp,
         color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier.combinedClickable(
@@ -381,7 +441,8 @@ private fun FilterCategoryChip(
         Text(
             text = label,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelLarge
+            style = MaterialTheme.typography.labelLarge,
+            color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -390,6 +451,7 @@ private fun FilterCategoryChip(
 @Composable
 private fun PostCard(
     post: PostEntity,
+    modifier: Modifier = Modifier,
     onToggleFavorito: () -> Unit,
     onDelete: () -> Unit,
     onEditNotes: () -> Unit,
@@ -399,66 +461,118 @@ private fun PostCard(
     onOpen: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    var favPressed by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
 
+    val favScale by animateFloatAsState(
+        targetValue = if (favPressed) 1.3f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        finishedListener = { favPressed = false },
+        label = "fav_scale"
+    )
+
     ElevatedCard(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .animateContentSize()
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
             .clickable(onClick = onOpen),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = RoundedCornerShape(20.dp)
+        shape = MaterialTheme.shapes.large
     ) {
         Column(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(
-                    text = post.autor.ifBlank { "@unknown" },
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = formatRelativeDate(post.fechaGuardado),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.alpha(0.85f)
-                )
+            // Header: Avatar + Author + Date
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Avatar circular con inicial
+                val initial = post.autor.removePrefix("@").firstOrNull()?.uppercase() ?: "?"
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = initial,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = post.autor.ifBlank { "@unknown" },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = formatRelativeDate(post.fechaGuardado),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
+
+            // Content
             Text(
                 text = post.contenido.ifBlank { stringResource(id = R.string.no_content_text) },
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.alpha(0.95f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.92f)
             )
+
+            // URL pill (outline style)
             Surface(
-                tonalElevation = 1.dp,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp)
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.surface,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant
+                )
             ) {
                 Text(
                     text = post.url,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            // Media
             if (!post.imagenPath.isNullOrBlank()) {
-                Box {
+                Box(
+                    modifier = Modifier.clip(MaterialTheme.shapes.medium)
+                ) {
                     AsyncImage(
                         model = post.imagenPath,
                         contentDescription = stringResource(id = R.string.preview_image_content_desc),
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(16f / 9f)
-                            .clip(RoundedCornerShape(14.dp))
                     )
                     if (MediaUrlUtils.isVideoUrl(post.imagenPath)) {
                         Surface(
@@ -466,7 +580,7 @@ private fun PostCard(
                                 .align(Alignment.Center)
                                 .size(42.dp),
                             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
-                            shape = RoundedCornerShape(21.dp)
+                            shape = CircleShape
                         ) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
@@ -474,33 +588,68 @@ private fun PostCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
                     }
                 }
             }
+
+            // Category chips
             if (post.categorias.isNotBlank()) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    post.categorias.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach {
-                        AssistChip(onClick = {}, label = { Text(it) })
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    post.categorias.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { cat ->
+                        SuggestionChip(
+                            onClick = {},
+                            label = {
+                                Text(
+                                    text = cat,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            },
+                            shape = MaterialTheme.shapes.small,
+                            colors = SuggestionChipDefaults.suggestionChipColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        )
                     }
                 }
             }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                IconButton(onClick = onToggleFavorito) {
+
+            // Footer: Favorite + Menu
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = {
+                        favPressed = true
+                        onToggleFavorito()
+                    },
+                    modifier = Modifier.graphicsLayer(
+                        scaleX = favScale,
+                        scaleY = favScale
+                    )
+                ) {
                     Icon(
                         imageVector = if (post.esFavorito) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = stringResource(id = R.string.favorite_toggle),
-                        tint = if (post.esFavorito) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (post.esFavorito) VaultFavorite else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = stringResource(id = R.string.more_actions)
+                            contentDescription = stringResource(id = R.string.more_actions),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     DropdownMenu(
@@ -509,10 +658,7 @@ private fun PostCard(
                     ) {
                         DropdownMenuItem(
                             leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.EditNote,
-                                    contentDescription = null
-                                )
+                                Icon(imageVector = Icons.Default.EditNote, contentDescription = null)
                             },
                             text = { Text(text = stringResource(id = R.string.edit_notes_action)) },
                             onClick = {
@@ -522,10 +668,7 @@ private fun PostCard(
                         )
                         DropdownMenuItem(
                             leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Label,
-                                    contentDescription = null
-                                )
+                                Icon(imageVector = Icons.AutoMirrored.Filled.Label, contentDescription = null)
                             },
                             text = { Text(text = stringResource(id = R.string.assign_categories_action)) },
                             onClick = {
@@ -535,10 +678,7 @@ private fun PostCard(
                         )
                         DropdownMenuItem(
                             leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = null
-                                )
+                                Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null)
                             },
                             text = { Text(text = stringResource(id = R.string.copy_url_action)) },
                             onClick = {
@@ -549,10 +689,7 @@ private fun PostCard(
                         )
                         DropdownMenuItem(
                             leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = null
-                                )
+                                Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
                             },
                             text = { Text(text = stringResource(id = R.string.retry_extraction_action)) },
                             onClick = {
@@ -564,10 +701,16 @@ private fun PostCard(
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = null
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
                                 )
                             },
-                            text = { Text(text = stringResource(id = R.string.delete_action)) },
+                            text = {
+                                Text(
+                                    text = stringResource(id = R.string.delete_action),
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            },
                             onClick = {
                                 menuExpanded = false
                                 onDelete()
@@ -646,7 +789,8 @@ private fun EditNotesDialog(
                 modifier = Modifier.fillMaxWidth(),
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text(text = stringResource(id = R.string.quick_notes_label)) }
+                label = { Text(text = stringResource(id = R.string.quick_notes_label)) },
+                shape = MaterialTheme.shapes.medium
             )
         },
         confirmButton = {
@@ -679,15 +823,21 @@ private fun AddCategoryDialog(
                     modifier = Modifier.fillMaxWidth(),
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(text = stringResource(id = R.string.new_category_label)) }
+                    label = { Text(text = stringResource(id = R.string.new_category_label)) },
+                    shape = MaterialTheme.shapes.medium
                 )
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = emoji,
                     onValueChange = { emoji = it },
-                    label = { Text(text = stringResource(id = R.string.new_category_emoji_label)) }
+                    label = { Text(text = stringResource(id = R.string.new_category_emoji_label)) },
+                    shape = MaterialTheme.shapes.medium
                 )
-                Text(text = stringResource(id = R.string.emoji_hint))
+                Text(
+                    text = stringResource(id = R.string.emoji_hint),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         },
         confirmButton = {
@@ -710,4 +860,3 @@ private fun formatRelativeDate(timestamp: Long): String {
         DateUtils.MINUTE_IN_MILLIS
     ).toString()
 }
-

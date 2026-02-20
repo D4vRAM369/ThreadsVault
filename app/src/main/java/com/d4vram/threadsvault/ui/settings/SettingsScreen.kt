@@ -3,38 +3,54 @@ package com.d4vram.threadsvault.ui.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
@@ -70,12 +86,22 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = title) },
+                title = {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(id = R.string.back_action)
+                            contentDescription = stringResource(id = R.string.back_action),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -86,150 +112,217 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            // ── Apariencia ──
             item {
-                SectionCard(title = stringResource(id = R.string.theme_mode_title)) {
-                    ThemeModeItem(
-                        label = stringResource(id = R.string.theme_system),
-                        selected = themeMode == ThemeMode.SYSTEM,
-                        onClick = { onThemeModeChange(ThemeMode.SYSTEM) }
+                SectionCard(
+                    icon = Icons.Default.Palette,
+                    title = stringResource(id = R.string.section_appearance)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.theme_mode_title),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    ThemeModeItem(
-                        label = stringResource(id = R.string.theme_light),
-                        selected = themeMode == ThemeMode.LIGHT,
-                        onClick = { onThemeModeChange(ThemeMode.LIGHT) }
-                    )
-                    ThemeModeItem(
-                        label = stringResource(id = R.string.theme_dark),
-                        selected = themeMode == ThemeMode.DARK,
-                        onClick = { onThemeModeChange(ThemeMode.DARK) }
-                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        val options = listOf(
+                            ThemeMode.SYSTEM to stringResource(id = R.string.theme_system),
+                            ThemeMode.LIGHT to stringResource(id = R.string.theme_light),
+                            ThemeMode.DARK to stringResource(id = R.string.theme_dark)
+                        )
+                        options.forEachIndexed { index, (mode, label) ->
+                            SegmentedButton(
+                                selected = themeMode == mode,
+                                onClick = { onThemeModeChange(mode) },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = options.size
+                                )
+                            ) {
+                                Text(text = label, style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+                    }
                 }
             }
 
+            // ── Categorias ──
             item {
-                SectionCard(title = stringResource(id = R.string.categories_title)) {
-                    Text(text = stringResource(id = R.string.emoji_hint))
+                SectionCard(
+                    icon = Icons.AutoMirrored.Filled.Label,
+                    title = stringResource(id = R.string.categories_title)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.emoji_hint),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             modifier = Modifier.weight(1f),
                             value = newCategory,
                             onValueChange = { newCategory = it },
-                            label = { Text(text = stringResource(id = R.string.new_category_label)) }
+                            label = { Text(text = stringResource(id = R.string.new_category_label)) },
+                            shape = MaterialTheme.shapes.medium,
+                            textStyle = MaterialTheme.typography.bodyMedium
                         )
                         OutlinedTextField(
-                            modifier = Modifier.weight(0.5f),
+                            modifier = Modifier.weight(0.45f),
                             value = newCategoryEmoji,
                             onValueChange = { newCategoryEmoji = it },
-                            label = { Text(text = stringResource(id = R.string.new_category_emoji_label)) }
+                            label = { Text(text = stringResource(id = R.string.new_category_emoji_label)) },
+                            shape = MaterialTheme.shapes.medium,
+                            textStyle = MaterialTheme.typography.bodyMedium
                         )
                     }
-                    Button(
+                    FilledTonalButton(
                         onClick = {
                             onAddCategory(newCategory, newCategoryEmoji)
                             newCategory = ""
                             newCategoryEmoji = ""
                         }
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(text = stringResource(id = R.string.add_category_action))
                     }
                 }
             }
 
             items(categories, key = { it.id }) { category ->
-                ElevatedCard(
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                    )
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = MaterialTheme.shapes.medium
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = listOf(category.emoji, category.nombre).filter { it.isNotBlank() }.joinToString(" "))
+                        Text(
+                            text = listOf(category.emoji, category.nombre).filter { it.isNotBlank() }.joinToString(" "),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                         IconButton(onClick = { pendingCategoryDelete = category }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = stringResource(id = R.string.delete_action)
+                                contentDescription = stringResource(id = R.string.delete_action),
+                                tint = MaterialTheme.colorScheme.error
                             )
                         }
                     }
                 }
             }
 
+            // ── Exportar ──
             item {
-                SectionCard(title = stringResource(id = R.string.export_title)) {
+                SectionCard(
+                    icon = Icons.Default.FileDownload,
+                    title = stringResource(id = R.string.export_title)
+                ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(modifier = Modifier.weight(1f), onClick = onExportCsv) {
+                        OutlinedButton(modifier = Modifier.weight(1f), onClick = onExportCsv) {
                             Text(text = stringResource(id = R.string.export_csv_action))
                         }
-                        Button(modifier = Modifier.weight(1f), onClick = onExportPdf) {
+                        OutlinedButton(modifier = Modifier.weight(1f), onClick = onExportPdf) {
                             Text(text = stringResource(id = R.string.export_pdf_action))
                         }
                     }
                 }
             }
 
+            // ── Backup ──
             item {
-                SectionCard(title = stringResource(id = R.string.backup_title)) {
+                SectionCard(
+                    icon = Icons.Default.CloudUpload,
+                    title = stringResource(id = R.string.backup_title)
+                ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(modifier = Modifier.weight(1f), onClick = onBackupJson) {
+                        FilledTonalButton(modifier = Modifier.weight(1f), onClick = onBackupJson) {
                             Text(text = stringResource(id = R.string.backup_json_action))
                         }
-                        Button(modifier = Modifier.weight(1f), onClick = { showRestoreConfirm = true }) {
+                        OutlinedButton(modifier = Modifier.weight(1f), onClick = { showRestoreConfirm = true }) {
                             Text(text = stringResource(id = R.string.restore_json_action))
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(modifier = Modifier.weight(1f), onClick = onBackupCsv) {
+                        FilledTonalButton(modifier = Modifier.weight(1f), onClick = onBackupCsv) {
                             Text(text = stringResource(id = R.string.backup_csv_action))
                         }
-                        Button(modifier = Modifier.weight(1f), onClick = onRestoreCsv) {
+                        OutlinedButton(modifier = Modifier.weight(1f), onClick = onRestoreCsv) {
                             Text(text = stringResource(id = R.string.restore_csv_action))
                         }
                     }
                 }
             }
 
+            // ── Autobackup ──
             item {
-                SectionCard(title = stringResource(id = R.string.auto_backup_title)) {
-                    Text(
-                        text = if (autoBackupFolderUri.isNullOrBlank()) {
-                            stringResource(id = R.string.auto_backup_folder_missing)
-                        } else {
-                            stringResource(id = R.string.auto_backup_folder_configured)
-                        }
-                    )
+                SectionCard(
+                    icon = Icons.Default.Schedule,
+                    title = stringResource(id = R.string.auto_backup_title)
+                ) {
+                    // Status chip
+                    Surface(
+                        color = if (autoBackupFolderUri.isNullOrBlank())
+                            MaterialTheme.colorScheme.errorContainer
+                        else
+                            MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = if (autoBackupFolderUri.isNullOrBlank())
+                                stringResource(id = R.string.auto_backup_folder_missing)
+                            else
+                                stringResource(id = R.string.auto_backup_folder_configured),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (autoBackupFolderUri.isNullOrBlank())
+                                MaterialTheme.colorScheme.onErrorContainer
+                            else
+                                MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(modifier = Modifier.weight(1f), onClick = onPickAutoBackupFolder) {
+                        FilledTonalButton(modifier = Modifier.weight(1f), onClick = onPickAutoBackupFolder) {
                             Text(text = stringResource(id = R.string.select_saf_folder_action))
                         }
-                        Button(modifier = Modifier.weight(1f), onClick = onClearAutoBackupFolder) {
+                        OutlinedButton(modifier = Modifier.weight(1f), onClick = onClearAutoBackupFolder) {
                             Text(text = stringResource(id = R.string.clear_saf_folder_action))
                         }
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        RadioButton(
+
+                    Text(
+                        text = stringResource(id = R.string.auto_backup_interval_label),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        SegmentedButton(
                             selected = autoBackupIntervalHours <= 12,
-                            onClick = { onAutoBackupIntervalChange(12) }
-                        )
-                        Text(text = stringResource(id = R.string.auto_backup_12h))
-                        RadioButton(
+                            onClick = { onAutoBackupIntervalChange(12) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                        ) {
+                            Text(text = stringResource(id = R.string.auto_backup_12h))
+                        }
+                        SegmentedButton(
                             selected = autoBackupIntervalHours > 12,
-                            onClick = { onAutoBackupIntervalChange(24) }
-                        )
-                        Text(text = stringResource(id = R.string.auto_backup_24h))
+                            onClick = { onAutoBackupIntervalChange(24) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                        ) {
+                            Text(text = stringResource(id = R.string.auto_backup_24h))
+                        }
                     }
                 }
             }
 
             item {
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(80.dp))
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
     }
@@ -290,46 +383,40 @@ fun SettingsScreen(
 
 @Composable
 private fun SectionCard(
+    icon: ImageVector,
     title: String,
     content: @Composable () -> Unit
 ) {
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
+        ),
+        shape = MaterialTheme.shapes.large
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
             content()
-        }
-    }
-}
-
-@Composable
-private fun ThemeModeItem(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .selectable(
-                selected = selected,
-                onClick = onClick
-            )
-            .padding(vertical = 6.dp)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            RadioButton(selected = selected, onClick = onClick)
-            Text(text = label)
         }
     }
 }

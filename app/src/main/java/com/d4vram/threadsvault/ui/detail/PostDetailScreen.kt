@@ -1,26 +1,38 @@
 package com.d4vram.threadsvault.ui.detail
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AssistChip
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,25 +40,46 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import coil.compose.AsyncImage
 import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.utils.MediaSaveUtils
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun PostDetailScreen(uiState: PostDetailUiState) {
+fun PostDetailScreen(
+    uiState: PostDetailUiState,
+    onBack: () -> Unit = {}
+) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = stringResource(id = R.string.post_detail_placeholder)) }
+                title = {
+                    Text(
+                        text = stringResource(id = R.string.post_detail_placeholder),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(id = R.string.back_action),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             )
         }
     ) { padding ->
@@ -58,7 +91,11 @@ fun PostDetailScreen(uiState: PostDetailUiState) {
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = stringResource(id = R.string.state_loading))
+                    Text(
+                        text = stringResource(id = R.string.state_loading),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
             is PostDetailUiState.Empty -> {
@@ -68,7 +105,11 @@ fun PostDetailScreen(uiState: PostDetailUiState) {
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = stringResource(id = R.string.post_detail_empty))
+                    Text(
+                        text = stringResource(id = R.string.post_detail_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
             is PostDetailUiState.Error -> {
@@ -78,7 +119,11 @@ fun PostDetailScreen(uiState: PostDetailUiState) {
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = uiState.message)
+                    Text(
+                        text = uiState.message,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             }
             is PostDetailUiState.Success -> {
@@ -91,38 +136,49 @@ fun PostDetailScreen(uiState: PostDetailUiState) {
                         .padding(padding)
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    // Author header
                     Text(
                         text = uiState.post.autor.ifBlank { "@unknown" },
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
-                    Text(
-                        text = stringResource(id = R.string.post_content_title),
-                        style = MaterialTheme.typography.labelMedium
-                    )
+
+                    // URL section
+                    DetailSectionLabel(text = stringResource(id = R.string.post_content_title))
                     Surface(
-                        tonalElevation = 1.dp,
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Text(
                             text = uiState.post.url,
                             style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(8.dp)
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
                         )
                     }
-                    Text(
-                        text = stringResource(id = R.string.extracted_content_title),
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                    Text(
-                        text = uiState.post.contenido.ifBlank { stringResource(id = R.string.no_content_text) },
-                        style = MaterialTheme.typography.bodyLarge
-                    )
 
+                    // Content section
+                    DetailSectionLabel(text = stringResource(id = R.string.extracted_content_title))
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text(
+                            text = uiState.post.contenido.ifBlank { stringResource(id = R.string.no_content_text) },
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp)
+                        )
+                    }
+
+                    // Media
                     if (mediaUrl.isNotBlank()) {
                         AsyncImage(
                             model = mediaUrl,
@@ -131,20 +187,51 @@ fun PostDetailScreen(uiState: PostDetailUiState) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 140.dp, max = 420.dp)
-                                .clip(RoundedCornerShape(14.dp))
+                                .clip(MaterialTheme.shapes.medium)
                                 .clickable { showImageViewer = true }
                         )
                     }
 
+                    // Categories as FlowRow chips
                     if (uiState.post.categorias.isNotBlank()) {
-                        AssistChip(
-                            onClick = {},
-                            label = { Text(text = uiState.post.categorias) }
-                        )
+                        DetailSectionLabel(text = stringResource(id = R.string.categories_title))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            uiState.post.categorias.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { cat ->
+                                SuggestionChip(
+                                    onClick = {},
+                                    label = { Text(text = cat, style = MaterialTheme.typography.labelMedium) },
+                                    shape = MaterialTheme.shapes.small,
+                                    colors = SuggestionChipDefaults.suggestionChipColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        labelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                )
+                            }
+                        }
                     }
+
+                    // Notes section
                     if (uiState.post.notas.isNotBlank()) {
-                        Text(text = uiState.post.notas, style = MaterialTheme.typography.bodyMedium)
+                        DetailSectionLabel(text = stringResource(id = R.string.notes_section_title))
+                        Surface(
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Text(
+                                text = uiState.post.notas,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp)
+                            )
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
 
                 if (showImageViewer && mediaUrl.isNotBlank()) {
@@ -156,6 +243,16 @@ fun PostDetailScreen(uiState: PostDetailUiState) {
             }
         }
     }
+}
+
+@Composable
+private fun DetailSectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)

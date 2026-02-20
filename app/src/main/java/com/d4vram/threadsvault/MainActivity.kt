@@ -143,7 +143,10 @@ class MainActivity : ComponentActivity() {
                             PostDetailViewModel(applicationContext, postId)
                         }
                         val detailUiState by detailViewModel.uiState.collectAsState()
-                        PostDetailScreen(uiState = detailUiState)
+                        PostDetailScreen(
+                            uiState = detailUiState,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
                     composable(AppRoute.SETTINGS) {
                         SettingsScreen(
