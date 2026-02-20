@@ -2,4 +2,8 @@
 <resources>
 
     <style name="Theme.ThreadsVault" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.ThreadsVault.Starting" parent="Theme.ThreadsVault">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
 </resources>

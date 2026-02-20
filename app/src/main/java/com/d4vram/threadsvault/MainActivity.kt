@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.collectLatest
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
