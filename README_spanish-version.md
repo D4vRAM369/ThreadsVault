@@ -1,5 +1,13 @@
 # ThreadsVault
 
+[![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2B2D42?logo=kotlin&logoColor=A97BFF)](https://kotlinlang.org/)
+[![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![PBL](https://img.shields.io/badge/Methodology-PBL-0A7EA4)](#)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Claude Code](https://img.shields.io/badge/Assistant-Claude%20Code-D97706)](https://www.anthropic.com/claude-code)
+[![Codex](https://img.shields.io/badge/Assistant-Codex-111827)](https://openai.com/)
+
 <p align="left">
   <a href="./README.md">Read in English</a>
 </p>
@@ -77,4 +85,3 @@ Comandos:
 ## Autor
 
 Creado por [D4vRAM369](https://github.com/D4vRAM369)
-
