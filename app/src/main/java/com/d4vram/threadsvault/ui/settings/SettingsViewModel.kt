@@ -104,6 +104,31 @@ class SettingsViewModel(context: Context) : ViewModel() {
         }
     }
 
+    fun editCategory(category: CategoryEntity, nombre: String, emoji: String) {
+        val parsed = CategoryInputParser.parse(nombre, emoji) ?: return
+        viewModelScope.launch {
+            val oldName = category.nombre
+            val newName = parsed.nombre
+            db.withTransaction {
+                db.categoryDao().actualizar(
+                    category.copy(
+                        nombre = newName,
+                        emoji = parsed.emoji
+                    )
+                )
+                if (!oldName.equals(newName, ignoreCase = true)) {
+                    val posts = postRepository.obtenerTodosDirecto()
+                    posts.forEach { post ->
+                        val updatedCsv = replaceCategoryName(post.categorias, oldName, newName)
+                        if (updatedCsv != post.categorias) {
+                            db.postDao().actualizar(post.copy(categorias = updatedCsv))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fun exportCsv() {
         viewModelScope.launch {
             _messageEvents.emit("Generando export CSV...")
@@ -294,5 +319,17 @@ class SettingsViewModel(context: Context) : ViewModel() {
                 successMessage = successMessage
             )
         )
+    }
+
+    private fun replaceCategoryName(csv: String, oldName: String, newName: String): String {
+        if (csv.isBlank()) return csv
+        return csv.split(",")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .map { current ->
+                if (current.equals(oldName, ignoreCase = true)) newName else current
+            }
+            .distinct()
+            .joinToString(",")
     }
 }

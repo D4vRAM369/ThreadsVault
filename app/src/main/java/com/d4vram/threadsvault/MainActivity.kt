@@ -161,6 +161,7 @@ class MainActivity : ComponentActivity() {
                             categories = settingsCategories,
                             onThemeModeChange = settingsViewModel::setThemeMode,
                             onAddCategory = settingsViewModel::addCategory,
+                            onEditCategory = settingsViewModel::editCategory,
                             onDeleteCategory = settingsViewModel::deleteCategory,
                             onExportCsv = settingsViewModel::exportCsv,
                             onExportPdf = settingsViewModel::exportPdf,

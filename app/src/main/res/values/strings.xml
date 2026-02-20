@@ -37,6 +37,7 @@
     <string name="new_category_label">Nueva categoria</string>
     <string name="new_category_emoji_label">Icono (opcional)</string>
     <string name="add_category_action">Agregar categoria</string>
+    <string name="edit_category_action">Editar categoria</string>
     <string name="post_content_title">Enlace</string>
     <string name="extracted_content_title">Contenido extraido</string>
     <string name="add_category_short">+ Categoria</string>

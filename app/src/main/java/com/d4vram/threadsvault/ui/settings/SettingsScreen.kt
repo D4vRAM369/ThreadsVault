@@ -18,6 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Palette
@@ -68,6 +69,7 @@ fun SettingsScreen(
     categories: List<CategoryEntity>,
     onThemeModeChange: (ThemeMode) -> Unit,
     onAddCategory: (String, String) -> Unit,
+    onEditCategory: (CategoryEntity, String, String) -> Unit,
     onDeleteCategory: (CategoryEntity) -> Unit,
     onExportCsv: () -> Unit,
     onExportPdf: () -> Unit,
@@ -83,6 +85,7 @@ fun SettingsScreen(
     var newCategoryEmoji by remember { mutableStateOf("") }
     var showRestoreConfirm by remember { mutableStateOf(false) }
     var pendingCategoryDelete by remember { mutableStateOf<CategoryEntity?>(null) }
+    var pendingCategoryEdit by remember { mutableStateOf<CategoryEntity?>(null) }
 
     Scaffold(
         topBar = {
@@ -216,12 +219,23 @@ fun SettingsScreen(
                             text = listOf(category.emoji, category.nombre).filter { it.isNotBlank() }.joinToString(" "),
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        IconButton(onClick = { pendingCategoryDelete = category }) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = stringResource(id = R.string.delete_action),
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = { pendingCategoryEdit = category }) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = stringResource(id = R.string.edit_category_action),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            IconButton(onClick = { pendingCategoryDelete = category }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = stringResource(id = R.string.delete_action),
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
@@ -387,6 +401,71 @@ fun SettingsScreen(
             }
         )
     }
+
+    pendingCategoryEdit?.let { target ->
+        EditCategoryDialog(
+            category = target,
+            onDismiss = { pendingCategoryEdit = null },
+            onSave = { name, emoji ->
+                onEditCategory(target, name, emoji)
+                pendingCategoryEdit = null
+            }
+        )
+    }
+}
+
+@Composable
+private fun EditCategoryDialog(
+    category: CategoryEntity,
+    onDismiss: () -> Unit,
+    onSave: (String, String) -> Unit
+) {
+    var name by remember(category.id) { mutableStateOf(category.nombre) }
+    var icon by remember(category.id) { mutableStateOf(category.emoji) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(id = R.string.edit_category_action)) },
+        text = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                OutlinedTextField(
+                    modifier = Modifier.weight(1f),
+                    value = name,
+                    onValueChange = { name = it },
+                    placeholder = { Text(text = stringResource(id = R.string.new_category_label)) },
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    modifier = Modifier.width(72.dp),
+                    value = icon,
+                    onValueChange = { icon = it },
+                    placeholder = {
+                        Text(
+                            text = stringResource(id = R.string.new_category_emoji_label),
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1
+                        )
+                    },
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(name, icon) }) {
+                Text(text = stringResource(id = R.string.save_action))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(id = R.string.cancel_action))
+            }
+        }
+    )
 }
 
 @Composable

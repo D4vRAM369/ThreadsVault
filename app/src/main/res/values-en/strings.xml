@@ -37,6 +37,7 @@
     <string name="new_category_label">New category</string>
     <string name="new_category_emoji_label">Icon (optional)</string>
     <string name="add_category_action">Add category</string>
+    <string name="edit_category_action">Edit category</string>
     <string name="post_content_title">Link</string>
     <string name="extracted_content_title">Extracted content</string>
     <string name="add_category_short">+ Category</string>
