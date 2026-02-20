@@ -1,6 +1,3 @@
-<img width="400" height="400" alt="ThreadsVault-icon" src="https://github.com/user-attachments/assets/1e871a24-469d-4d54-bb55-44b1f519ddf1" />
-
-
 # ThreadsVault
 
 [![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
@@ -11,6 +8,7 @@
 [![Claude Code](https://img.shields.io/badge/Assistant-Claude%20Code-D97706)](https://www.anthropic.com/claude-code)
 [![Codex](https://img.shields.io/badge/Assistant-Codex-111827)](https://openai.com/)
 
+<img width="400" height="400" alt="ThreadsVault-icon" src="https://github.com/user-attachments/assets/1e871a24-469d-4d54-bb55-44b1f519ddf1" />
 
 <p align="left">
   <a href="./README_spanish-version.md">Leer en espanol</a>
@@ -24,7 +22,6 @@ Threads in my experience, is quite good for discovering content, news, AI or pro
 However, good posts get lost quickly in the endless stream after an auto-scroll, and I don't like the idea of having access to that content only through the app's Saved section, or having to copy them one by one to another place.
 
 For this reason, I decided to create an Android app with a vault where I can send posts, extract images using OCR (I haven't managed to get videos working), add notes, mark favorites, and organize everything into different user-created categories.
-
 
 ## Features
 
