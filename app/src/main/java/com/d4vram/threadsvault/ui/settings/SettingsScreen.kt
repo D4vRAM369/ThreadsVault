@@ -1,5 +1,6 @@
 package com.d4vram.threadsvault.ui.settings
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -56,7 +57,7 @@ import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.preferences.ThemeMode
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SettingsScreen(
     title: String,
@@ -155,27 +156,33 @@ fun SettingsScreen(
                     icon = Icons.AutoMirrored.Filled.Label,
                     title = stringResource(id = R.string.categories_title)
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.emoji_hint),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         OutlinedTextField(
                             modifier = Modifier.weight(1f),
                             value = newCategory,
                             onValueChange = { newCategory = it },
-                            label = { Text(text = stringResource(id = R.string.new_category_label)) },
+                            placeholder = { Text(text = stringResource(id = R.string.new_category_label)) },
                             shape = MaterialTheme.shapes.medium,
-                            textStyle = MaterialTheme.typography.bodyMedium
+                            textStyle = MaterialTheme.typography.bodyMedium,
+                            singleLine = true
                         )
                         OutlinedTextField(
-                            modifier = Modifier.weight(0.45f),
+                            modifier = Modifier.width(72.dp),
                             value = newCategoryEmoji,
                             onValueChange = { newCategoryEmoji = it },
-                            label = { Text(text = stringResource(id = R.string.new_category_emoji_label)) },
+                            placeholder = {
+                                Text(
+                                    text = stringResource(id = R.string.new_category_emoji_label),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    maxLines = 1
+                                )
+                            },
                             shape = MaterialTheme.shapes.medium,
-                            textStyle = MaterialTheme.typography.bodyMedium
+                            textStyle = MaterialTheme.typography.bodyMedium,
+                            singleLine = true
                         )
                     }
                     FilledTonalButton(
@@ -194,6 +201,7 @@ fun SettingsScreen(
 
             items(categories, key = { it.id }) { category ->
                 Surface(
+                    modifier = Modifier.animateItemPlacement(),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     shape = MaterialTheme.shapes.medium
                 ) {

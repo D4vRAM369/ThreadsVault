@@ -47,6 +47,7 @@ class MainActivity : ComponentActivity() {
             val searchQuery by vaultViewModel.searchQuery.collectAsState()
             val categories by vaultViewModel.categories.collectAsState()
             val selectedCategory by vaultViewModel.currentCategory.collectAsState()
+            val showFavoritesOnly by vaultViewModel.showFavoritesOnly.collectAsState()
             val themeMode by settingsViewModel.themeMode.collectAsState()
             val settingsCategories by settingsViewModel.categories.collectAsState()
             val autoBackupFolderUri by settingsViewModel.autoBackupFolderUri.collectAsState()
@@ -115,9 +116,11 @@ class MainActivity : ComponentActivity() {
                             searchText = searchQuery,
                             categories = categories,
                             selectedCategory = selectedCategory,
+                            showFavoritesOnly = showFavoritesOnly,
                             uiState = vaultUiState,
                             onSearchTextChange = vaultViewModel::onSearchTextChange,
                             onSelectCategory = vaultViewModel::onCategorySelected,
+                            onToggleFavoritesFilter = vaultViewModel::toggleFavoritesFilter,
                             onToggleFavorito = vaultViewModel::toggleFavorito,
                             onDeletePost = vaultViewModel::borrarPost,
                             onRestorePost = vaultViewModel::restaurarPost,

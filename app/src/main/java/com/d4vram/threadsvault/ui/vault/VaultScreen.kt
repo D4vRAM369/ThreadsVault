@@ -22,10 +22,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -37,6 +41,7 @@ import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -44,6 +49,9 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -83,6 +91,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -105,9 +114,11 @@ fun VaultScreen(
     searchText: String,
     categories: List<CategoryEntity>,
     selectedCategory: String?,
+    showFavoritesOnly: Boolean,
     uiState: VaultUiState,
     onSearchTextChange: (String) -> Unit,
     onSelectCategory: (String?) -> Unit,
+    onToggleFavoritesFilter: () -> Unit,
     onToggleFavorito: (PostEntity) -> Unit,
     onDeletePost: (PostEntity) -> Unit,
     onRestorePost: (PostEntity) -> Unit,
@@ -221,37 +232,74 @@ fun VaultScreen(
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 shape = MaterialTheme.shapes.large
             ) {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 6.dp)
                 ) {
-                    item {
-                        FilterCategoryChip(
-                            label = stringResource(id = R.string.category_all),
-                            selected = selectedCategory == null,
-                            onClick = { onSelectCategory(null) }
+                    // Fixed favorites chip
+                    Spacer(modifier = Modifier.width(8.dp))
+                    FilterChip(
+                        selected = showFavoritesOnly,
+                        onClick = onToggleFavoritesFilter,
+                        label = {
+                            Text(
+                                text = stringResource(id = R.string.favorites_filter_label),
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (showFavoritesOnly) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = VaultFavorite.copy(alpha = 0.15f),
+                            selectedLabelColor = VaultFavorite,
+                            selectedLeadingIconColor = VaultFavorite
                         )
-                    }
-                    items(categories, key = { it.id }) { category ->
-                        FilterCategoryChip(
-                            label = listOf(category.emoji, category.nombre).filter { it.isNotBlank() }.joinToString(" "),
-                            selected = selectedCategory == category.nombre,
-                            onClick = { onSelectCategory(category.nombre) },
-                            onLongClick = {
-                                if (!category.nombre.equals("Sin categoria", ignoreCase = true) &&
-                                    !category.nombre.equals("Sin categoría", ignoreCase = true)
-                                ) {
-                                    pendingCategoryDelete = category
+                    )
+                    VerticalDivider(
+                        modifier = Modifier
+                            .height(28.dp)
+                            .padding(horizontal = 8.dp),
+                        thickness = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                    // Scrollable categories
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        item {
+                            FilterCategoryChip(
+                                label = stringResource(id = R.string.category_all),
+                                selected = selectedCategory == null && !showFavoritesOnly,
+                                onClick = { onSelectCategory(null) }
+                            )
+                        }
+                        items(categories, key = { it.id }) { category ->
+                            FilterCategoryChip(
+                                label = listOf(category.emoji, category.nombre).filter { it.isNotBlank() }.joinToString(" "),
+                                selected = selectedCategory == category.nombre,
+                                onClick = { onSelectCategory(category.nombre) },
+                                onLongClick = {
+                                    if (!category.nombre.equals("Sin categoria", ignoreCase = true) &&
+                                        !category.nombre.equals("Sin categoría", ignoreCase = true)
+                                    ) {
+                                        pendingCategoryDelete = category
+                                    }
                                 }
-                            }
-                        )
-                    }
-                    item {
-                        FilterCategoryChip(
-                            label = stringResource(id = R.string.add_category_short),
-                            selected = false,
-                            onClick = { showAddCategoryDialog = true }
-                        )
+                            )
+                        }
+                        item {
+                            FilterCategoryChip(
+                                label = stringResource(id = R.string.add_category_short),
+                                selected = false,
+                                onClick = { showAddCategoryDialog = true }
+                            )
+                        }
                     }
                 }
             }
@@ -268,11 +316,20 @@ fun VaultScreen(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = stringResource(id = R.string.state_loading),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    strokeWidth = 3.dp
+                                )
+                                Text(
+                                    text = stringResource(id = R.string.state_loading),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                     is VaultUiState.Empty -> {
@@ -429,10 +486,20 @@ private fun FilterCategoryChip(
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null
 ) {
+    val bgColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        animationSpec = tween(durationMillis = 200),
+        label = "chip_bg"
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(durationMillis = 200),
+        label = "chip_text"
+    )
     Surface(
         shape = MaterialTheme.shapes.medium,
         tonalElevation = if (selected) 3.dp else 0.dp,
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        color = bgColor,
         modifier = Modifier.combinedClickable(
             onClick = onClick,
             onLongClick = onLongClick
@@ -442,7 +509,7 @@ private fun FilterCategoryChip(
             text = label,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             style = MaterialTheme.typography.labelLarge,
-            color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+            color = textColor
         )
     }
 }
@@ -541,7 +608,8 @@ private fun PostCard(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.92f)
             )
 
-            // URL pill (outline style)
+            // URL pill (clickable hyperlink + copy)
+            val uriHandler = LocalUriHandler.current
             Surface(
                 shape = MaterialTheme.shapes.small,
                 color = MaterialTheme.colorScheme.surface,
@@ -550,16 +618,39 @@ private fun PostCard(
                     MaterialTheme.colorScheme.outlineVariant
                 )
             ) {
-                Text(
-                    text = post.url,
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                        .padding(start = 10.dp, top = 2.dp, bottom = 2.dp, end = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = post.url,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                runCatching { uriHandler.openUri(post.url) }
+                            },
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    IconButton(
+                        onClick = {
+                            clipboardManager.setText(AnnotatedString(post.url))
+                            onCopyUrl(post.url)
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = stringResource(id = R.string.copy_url_action),
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
 
             // Media
@@ -622,12 +713,22 @@ private fun PostCard(
                 }
             }
 
-            // Footer: Favorite + Menu
+            // Footer: Notes indicator + Favorite + Menu
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (post.notas.isNotBlank()) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Notes,
+                        contentDescription = stringResource(id = R.string.has_notes_indicator),
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.tertiary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
+                Spacer(modifier = Modifier.weight(1f))
                 IconButton(
                     onClick = {
                         favPressed = true
@@ -812,36 +913,42 @@ private fun AddCategoryDialog(
     onAdd: (String, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var emoji by remember { mutableStateOf("") }
+    var icon by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(text = stringResource(id = R.string.add_category_action)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top
+            ) {
                 OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(1f),
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(text = stringResource(id = R.string.new_category_label)) },
-                    shape = MaterialTheme.shapes.medium
+                    placeholder = { Text(text = stringResource(id = R.string.new_category_label)) },
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true
                 )
                 OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    value = emoji,
-                    onValueChange = { emoji = it },
-                    label = { Text(text = stringResource(id = R.string.new_category_emoji_label)) },
-                    shape = MaterialTheme.shapes.medium
-                )
-                Text(
-                    text = stringResource(id = R.string.emoji_hint),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    modifier = Modifier.width(72.dp),
+                    value = icon,
+                    onValueChange = { icon = it },
+                    placeholder = {
+                        Text(
+                            text = stringResource(id = R.string.new_category_emoji_label),
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1
+                        )
+                    },
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onAdd(name, emoji) }) {
+            TextButton(onClick = { onAdd(name, icon) }) {
                 Text(text = stringResource(id = R.string.save_action))
             }
         },

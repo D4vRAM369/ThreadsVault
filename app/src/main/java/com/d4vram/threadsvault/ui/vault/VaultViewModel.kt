@@ -36,34 +36,40 @@ class VaultViewModel(context: Context) : ViewModel() {
     val searchQuery: StateFlow<String> = searchText
     private val selectedCategory = MutableStateFlow<String?>(null)
     val currentCategory: StateFlow<String?> = selectedCategory
+    private val _showFavoritesOnly = MutableStateFlow(false)
+    val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly
 
     val categories: StateFlow<List<CategoryEntity>> = db.categoryDao()
         .obtenerTodas()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val uiState: StateFlow<VaultUiState> = combine(searchText, selectedCategory) { query, category ->
-        query to category
-    }.flatMapLatest { (query, category) ->
+    val uiState: StateFlow<VaultUiState> = combine(
+        searchText, selectedCategory, _showFavoritesOnly
+    ) { query, category, favOnly ->
+        Triple(query, category, favOnly)
+    }.flatMapLatest { (query, category, favOnly) ->
         val baseFlow = if (query.isBlank()) repository.obtenerTodos() else repository.buscar(query)
-        if (category.isNullOrBlank()) {
-            baseFlow
-        } else {
-            baseFlow.map { posts ->
-                posts.filter { post ->
+        baseFlow.map { posts ->
+            var filtered = posts
+            if (favOnly) {
+                filtered = filtered.filter { it.esFavorito }
+            }
+            if (!category.isNullOrBlank()) {
+                filtered = filtered.filter { post ->
                     post.categorias.split(",")
                         .map { it.trim() }
                         .contains(category)
                 }
             }
+            filtered
         }
     }.map { posts ->
-            if (posts.isEmpty()) VaultUiState.Empty else VaultUiState.Success(posts)
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = VaultUiState.Loading
-        )
+        if (posts.isEmpty()) VaultUiState.Empty else VaultUiState.Success(posts)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = VaultUiState.Loading
+    )
 
     fun onSearchTextChange(value: String) {
         searchText.value = value
@@ -71,6 +77,10 @@ class VaultViewModel(context: Context) : ViewModel() {
 
     fun onCategorySelected(category: String?) {
         selectedCategory.value = category
+    }
+
+    fun toggleFavoritesFilter() {
+        _showFavoritesOnly.value = !_showFavoritesOnly.value
     }
 
     fun addCategory(nombre: String, emoji: String) {

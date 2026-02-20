@@ -35,12 +35,14 @@
     <string name="retry_extraction_action">Reintentar extracción</string>
     <string name="categories_title">Categorias</string>
     <string name="new_category_label">Nueva categoria</string>
-    <string name="new_category_emoji_label">Emoji (opcional)</string>
+    <string name="new_category_emoji_label">Icono (opcional)</string>
     <string name="add_category_action">Agregar categoria</string>
     <string name="post_content_title">Enlace</string>
     <string name="extracted_content_title">Contenido extraido</string>
     <string name="add_category_short">+ Categoria</string>
-    <string name="emoji_hint">Tip: pega solo emoji en este campo (no SVG ni URL).</string>
+    <string name="emoji_hint">Tip: puedes usar emoji, texto o cualquier icono corto.</string>
+    <string name="saved_on_label">Guardado</string>
+    <string name="has_notes_indicator">Tiene notas</string>
     <string name="delete_category_title">Eliminar categoria</string>
     <string name="delete_category_message">Se eliminara la categoria "%1$s". Esta accion no se puede deshacer.</string>
     <string name="save_to_gallery_action">Guardar en galeria</string>
@@ -67,4 +69,5 @@
     <string name="download_action">Descargar</string>
     <string name="section_appearance">Apariencia</string>
     <string name="notes_section_title">Notas</string>
+    <string name="favorites_filter_label">Favoritos</string>
 </resources>
