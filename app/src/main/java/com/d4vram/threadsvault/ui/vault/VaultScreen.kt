@@ -2,6 +2,7 @@ package com.d4vram.threadsvault.ui.vault
 
 import android.text.format.DateUtils
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
@@ -60,7 +61,6 @@ import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
@@ -71,6 +71,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -181,8 +182,8 @@ fun VaultScreen(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -237,62 +238,83 @@ fun VaultScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = searchText,
-                onValueChange = onSearchTextChange,
-                label = { Text(text = stringResource(id = R.string.search_label)) },
-                leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
-                shape = MaterialTheme.shapes.medium
-            )
-            Spacer(modifier = Modifier.size(12.dp))
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                shape = MaterialTheme.shapes.large
+            ElevatedCard(
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 6.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Scrollable categories
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(horizontal = 8.dp)
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = searchText,
+                        onValueChange = onSearchTextChange,
+                        placeholder = { Text(text = stringResource(id = R.string.search_label)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
+                        shape = MaterialTheme.shapes.large,
+                        singleLine = true
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+                    Text(
+                        text = stringResource(id = R.string.vault_quick_filters_label),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 6.dp)
+                    )
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        shape = MaterialTheme.shapes.large,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.28f))
                     ) {
-                        item {
-                            FilterCategoryChip(
-                                label = stringResource(id = R.string.category_all),
-                                selected = selectedCategory == null && !showFavoritesOnly,
-                                onClick = { onSelectCategory(null) }
-                            )
-                        }
-                        items(categories, key = { it.id }) { category ->
-                            val count = postCountsByCategory[category.nombre]
-                            val chipLabel = buildString {
-                                listOf(category.emoji, category.nombre)
-                                    .filter { it.isNotBlank() }
-                                    .joinTo(this, " ")
-                                if (count != null && count > 0) append(" ($count)")
-                            }
-                            FilterCategoryChip(
-                                label = chipLabel,
-                                selected = selectedCategory == category.nombre,
-                                onClick = { onSelectCategory(category.nombre) },
-                                onLongClick = {
-                                    if (!category.nombre.equals("Sin categoria", ignoreCase = true) &&
-                                        !category.nombre.equals("Sin categoría", ignoreCase = true)
-                                    ) {
-                                        pendingCategoryDelete = category
-                                    }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 6.dp)
+                        ) {
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            ) {
+                                item {
+                                    FilterCategoryChip(
+                                        label = stringResource(id = R.string.category_all),
+                                        selected = selectedCategory == null && !showFavoritesOnly,
+                                        onClick = { onSelectCategory(null) }
+                                    )
                                 }
-                            )
-                        }
-                        item {
-                            FilterCategoryChip(
-                                label = stringResource(id = R.string.add_category_short),
-                                selected = false,
-                                onClick = { showAddCategoryDialog = true }
-                            )
+                                items(categories, key = { it.id }) { category ->
+                                    val count = postCountsByCategory[category.nombre]
+                                    val chipLabel = buildString {
+                                        listOf(category.emoji, category.nombre)
+                                            .filter { it.isNotBlank() }
+                                            .joinTo(this, " ")
+                                        if (count != null && count > 0) append(" ($count)")
+                                    }
+                                    FilterCategoryChip(
+                                        label = chipLabel,
+                                        selected = selectedCategory == category.nombre,
+                                        onClick = { onSelectCategory(category.nombre) },
+                                        onLongClick = {
+                                            if (!category.nombre.equals("Sin categoria", ignoreCase = true) &&
+                                                !category.nombre.equals("Sin categoría", ignoreCase = true)
+                                            ) {
+                                                pendingCategoryDelete = category
+                                            }
+                                        }
+                                    )
+                                }
+                                item {
+                                    FilterCategoryChip(
+                                        label = stringResource(id = R.string.add_category_short),
+                                        selected = false,
+                                        onClick = { showAddCategoryDialog = true }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -309,7 +331,7 @@ fun VaultScreen(
                         ShimmerPostCardList()
                     }
                     is VaultUiState.Empty -> {
-                        EmptyVaultState(onManualAdd = onManualAdd)
+                        EmptyVaultState()
                     }
                     is VaultUiState.Error -> {
                         Box(
@@ -436,53 +458,52 @@ fun VaultScreen(
 }
 
 @Composable
-private fun EmptyVaultState(onManualAdd: () -> Unit = {}) {
+private fun EmptyVaultState() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(32.dp)
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
         ) {
-            val pulse = rememberInfiniteTransition(label = "empty_pulse")
-            val scale by pulse.animateFloat(
-                initialValue = 1f, targetValue = 1.08f,
-                animationSpec = infiniteRepeatable(
-                    tween(1400, easing = LinearEasing),
-                    RepeatMode.Reverse
-                ),
-                label = "icon_scale"
-            )
-            Icon(
-                imageVector = Icons.Outlined.Inventory2,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp).scale(scale),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
-            )
-            Text(
-                text = stringResource(id = R.string.state_empty_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = stringResource(id = R.string.state_empty_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Button(onClick = onManualAdd) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Inventory2,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .size(72.dp),
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
+                    )
+                }
+                Text(
+                    text = stringResource(id = R.string.state_empty_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = stringResource(id = R.string.manual_add_placeholder))
+                Text(
+                    text = stringResource(id = R.string.state_empty_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                )
+                Spacer(modifier = Modifier.height(2.dp))
             }
         }
     }

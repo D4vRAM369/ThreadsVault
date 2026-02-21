@@ -32,6 +32,7 @@
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Oscuro</string>
     <string name="category_all">Todas</string>
+    <string name="vault_quick_filters_label">Filtros rapidos</string>
     <string name="preview_image_content_desc">Imagen del post</string>
     <string name="retry_extraction_action">Reintentar extracción</string>
     <string name="categories_title">Categorias</string>
