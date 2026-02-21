@@ -58,6 +58,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.rounded.Tag
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.AlertDialog
@@ -155,6 +156,10 @@ fun VaultScreen(
     val postCount = when (uiState) {
         is VaultUiState.Success -> uiState.posts.size
         else -> 0
+    }
+    val topHashtags = when (uiState) {
+        is VaultUiState.Success -> extractTopHashtags(uiState.posts)
+        else -> emptyList()
     }
 
     LaunchedEffect(pendingDeleted) {
@@ -263,6 +268,71 @@ fun VaultScreen(
                         .padding(horizontal = 10.dp, vertical = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Tag,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = stringResource(id = R.string.vault_hashtags_label),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        if (topHashtags.isNotEmpty()) {
+                            Text(
+                                text = "${topHashtags.size}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    if (topHashtags.isNotEmpty()) {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(topHashtags, key = { it }) { tag ->
+                                Surface(
+                                    shape = RoundedCornerShape(999.dp),
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    border = BorderStroke(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.32f)
+                                    )
+                                ) {
+                                    Text(
+                                        text = "#$tag",
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(id = R.string.vault_hashtags_empty),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = searchText,
@@ -278,7 +348,6 @@ fun VaultScreen(
                             unfocusedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)
                         )
                     )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -559,16 +628,22 @@ private fun EmptyVaultState() {
                         color = MaterialTheme.colorScheme.onBackground,
                         textAlign = TextAlign.Center
                     )
-                    Text(
-                        text = stringResource(id = R.string.state_empty_hint),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 24.sp
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                }
+                Text(
+                    text = stringResource(id = R.string.state_empty_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                )
+                Text(
+                    text = stringResource(id = R.string.state_empty_hashtag_tip),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(2.dp))
             }
+        }
         }
     }
 }
@@ -1084,6 +1159,29 @@ private fun formatRelativeDate(timestamp: Long): String {
         System.currentTimeMillis(),
         DateUtils.MINUTE_IN_MILLIS
     ).toString()
+}
+
+private fun extractTopHashtags(posts: List<PostEntity>): List<String> {
+    val counts = linkedMapOf<String, Int>()
+    val regex = Regex("""#([A-Za-z0-9_]{2,30})""")
+    posts.forEach { post ->
+        post.etiquetas
+            .split(",")
+            .map { it.trim().lowercase() }
+            .filter { it.isNotBlank() }
+            .forEach { tag -> counts[tag] = (counts[tag] ?: 0) + 1 }
+
+        if (post.etiquetas.isBlank()) {
+            regex.findAll(post.contenido).forEach { match ->
+                val tag = match.groupValues[1].lowercase()
+                counts[tag] = (counts[tag] ?: 0) + 1
+            }
+        }
+    }
+    return counts.entries
+        .sortedByDescending { it.value }
+        .map { it.key }
+        .take(8)
 }
 
 @Composable

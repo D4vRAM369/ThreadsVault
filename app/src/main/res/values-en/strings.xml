@@ -8,6 +8,7 @@
     <string name="state_empty">Your vault is still empty</string>
     <string name="state_empty_title">Vault ready to go</string>
     <string name="state_empty_hint">Share from Threads or add a link manually to get started.</string>
+    <string name="state_empty_hashtag_tip">Tip: use #hashtags to classify and find content faster.</string>
     <string name="favorite_toggle">Toggle favorite</string>
     <string name="delete_action">Delete post</string>
     <string name="manual_add_placeholder">Add manually</string>
@@ -33,6 +34,8 @@
     <string name="theme_dark">Dark</string>
     <string name="category_all">All</string>
     <string name="vault_quick_filters_label">Quick filters</string>
+    <string name="vault_hashtags_label">Saved hashtags</string>
+    <string name="vault_hashtags_empty">No hashtags yet. Use #tags in notes or content.</string>
     <string name="preview_image_content_desc">Post image</string>
     <string name="retry_extraction_action">Retry extraction</string>
     <string name="categories_title">Categories</string>
