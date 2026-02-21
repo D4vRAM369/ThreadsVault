@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,11 +28,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -298,28 +306,10 @@ fun VaultScreen(
             ) { state ->
                 when (state) {
                     is VaultUiState.Loading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                CircularProgressIndicator(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    strokeWidth = 3.dp
-                                )
-                                Text(
-                                    text = stringResource(id = R.string.state_loading),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
+                        ShimmerPostCardList()
                     }
                     is VaultUiState.Empty -> {
-                        EmptyVaultState()
+                        EmptyVaultState(onManualAdd = onManualAdd)
                     }
                     is VaultUiState.Error -> {
                         Box(
@@ -339,9 +329,31 @@ fun VaultScreen(
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 120.dp)
                         ) {
                             items(state.posts, key = { it.id }) { post ->
+                                val firstCat = post.categorias.split(",")
+                                    .map { it.trim() }.firstOrNull { it.isNotBlank() }
+                                val accentColor = firstCat?.let { name ->
+                                    categories.find { it.nombre == name }?.color?.let { hex ->
+                                        runCatching {
+                                            val c = android.graphics.Color.parseColor(hex)
+                                            androidx.compose.ui.graphics.Color(
+                                                red = android.graphics.Color.red(c) / 255f,
+                                                green = android.graphics.Color.green(c) / 255f,
+                                                blue = android.graphics.Color.blue(c) / 255f
+                                            )
+                                        }.getOrNull()
+                                    }
+                                }
+                                var visible by remember { mutableStateOf(false) }
+                                val cardAlpha by animateFloatAsState(
+                                    targetValue = if (visible) 1f else 0f,
+                                    animationSpec = tween(250),
+                                    label = "card_fade"
+                                )
+                                LaunchedEffect(Unit) { visible = true }
                                 PostCard(
                                     post = post,
-                                    modifier = Modifier.animateItemPlacement(),
+                                    modifier = Modifier.animateItemPlacement().alpha(cardAlpha),
+                                    accentColor = accentColor,
                                     onToggleFavorito = { onToggleFavorito(post) },
                                     onDelete = {
                                         onDeletePost(post)
@@ -424,8 +436,7 @@ fun VaultScreen(
 }
 
 @Composable
-private fun EmptyVaultState(
-) {
+private fun EmptyVaultState(onManualAdd: () -> Unit = {}) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -435,31 +446,44 @@ private fun EmptyVaultState(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(32.dp)
         ) {
+            val pulse = rememberInfiniteTransition(label = "empty_pulse")
+            val scale by pulse.animateFloat(
+                initialValue = 1f, targetValue = 1.08f,
+                animationSpec = infiniteRepeatable(
+                    tween(1400, easing = LinearEasing),
+                    RepeatMode.Reverse
+                ),
+                label = "icon_scale"
+            )
             Icon(
                 imageVector = Icons.Outlined.Inventory2,
                 contentDescription = null,
-                modifier = Modifier.size(72.dp),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                modifier = Modifier.size(80.dp).scale(scale),
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
             )
             Text(
                 text = stringResource(id = R.string.state_empty_title),
                 style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = stringResource(id = R.string.state_empty),
+                text = stringResource(id = R.string.state_empty_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            Text(
-                text = stringResource(id = R.string.state_empty_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
+            Button(onClick = onManualAdd) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(text = stringResource(id = R.string.manual_add_placeholder))
+            }
         }
     }
 }
@@ -509,6 +533,7 @@ private fun FilterCategoryChip(
 private fun PostCard(
     post: PostEntity,
     modifier: Modifier = Modifier,
+    accentColor: androidx.compose.ui.graphics.Color? = null,
     onToggleFavorito: () -> Unit,
     onDelete: () -> Unit,
     onEditNotes: () -> Unit,
@@ -546,8 +571,17 @@ private fun PostCard(
         ),
         shape = MaterialTheme.shapes.large
     ) {
+        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            if (accentColor != null) {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .fillMaxHeight()
+                        .background(accentColor)
+                )
+            }
         Column(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.weight(1f).padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Header: Avatar + Author + Date
@@ -811,6 +845,7 @@ private fun PostCard(
                 }
             }
         }
+        } // closes Row (accent strip + content)
     }
 }
 
@@ -956,4 +991,66 @@ private fun formatRelativeDate(timestamp: Long): String {
         System.currentTimeMillis(),
         DateUtils.MINUTE_IN_MILLIS
     ).toString()
+}
+
+@Composable
+private fun shimmerBrush(): Brush {
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val offset by transition.animateFloat(
+        initialValue = -600f, targetValue = 600f,
+        animationSpec = infiniteRepeatable(
+            tween(1000, easing = LinearEasing),
+            RepeatMode.Restart
+        ),
+        label = "shimmer_offset"
+    )
+    val base = MaterialTheme.colorScheme.surfaceContainerHigh
+    val highlight = MaterialTheme.colorScheme.surfaceContainerHighest
+    return Brush.horizontalGradient(
+        colors = listOf(base, highlight, base),
+        startX = offset,
+        endX = offset + 600f
+    )
+}
+
+@Composable
+private fun ShimmerPostCard(brush: Brush) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(brush))
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Box(modifier = Modifier.height(12.dp).fillMaxWidth(0.35f).clip(MaterialTheme.shapes.small).background(brush))
+                    Box(modifier = Modifier.height(10.dp).fillMaxWidth(0.2f).clip(MaterialTheme.shapes.small).background(brush))
+                }
+            }
+            Box(modifier = Modifier.height(12.dp).fillMaxWidth(0.95f).clip(MaterialTheme.shapes.small).background(brush))
+            Box(modifier = Modifier.height(12.dp).fillMaxWidth(0.8f).clip(MaterialTheme.shapes.small).background(brush))
+            Box(modifier = Modifier.height(12.dp).fillMaxWidth(0.6f).clip(MaterialTheme.shapes.small).background(brush))
+        }
+    }
+}
+
+@Composable
+private fun ShimmerPostCardList() {
+    val brush = shimmerBrush()
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 120.dp),
+        userScrollEnabled = false
+    ) {
+        items(5) { ShimmerPostCard(brush) }
+    }
 }

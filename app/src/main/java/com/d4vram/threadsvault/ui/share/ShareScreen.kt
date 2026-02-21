@@ -14,7 +14,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -45,10 +48,12 @@ fun ShareScreen(
     categories: List<CategoryEntity>,
     saveState: ShareSaveState,
     onSave: (notas: String, categoria: String?) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onAddCategory: (nombre: String, emoji: String) -> Unit = { _, _ -> }
 ) {
     var notes by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var showAddCategory by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onCancel,
@@ -106,10 +111,12 @@ fun ShareScreen(
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(categories) { category ->
+                        val label = listOf(category.emoji, category.nombre)
+                            .filter { it.isNotBlank() }.joinToString(" ")
                         FilterChip(
                             selected = selectedCategory == category.nombre,
                             onClick = { selectedCategory = category.nombre },
-                            label = { Text(text = category.nombre) },
+                            label = { Text(text = label) },
                             leadingIcon = {
                                 if (selectedCategory == category.nombre) {
                                     Text(text = "\u2713")
@@ -117,6 +124,31 @@ fun ShareScreen(
                             }
                         )
                     }
+                    item {
+                        FilterChip(
+                            selected = false,
+                            onClick = { showAddCategory = true },
+                            label = { Text(text = "Nueva") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        )
+                    }
+                }
+
+                if (showAddCategory) {
+                    AddCategoryInlineDialog(
+                        onDismiss = { showAddCategory = false },
+                        onAdd = { nombre, emoji ->
+                            onAddCategory(nombre, emoji)
+                            selectedCategory = nombre
+                            showAddCategory = false
+                        }
+                    )
                 }
             }
 
@@ -147,4 +179,45 @@ fun ShareScreen(
             }
         }
     }
+}
+@Composable
+private fun AddCategoryInlineDialog(
+    onDismiss: () -> Unit,
+    onAdd: (nombre: String, emoji: String) -> Unit
+) {
+    var nombre by remember { mutableStateOf("") }
+    var emoji by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Nueva categoría") },
+        text = {
+            androidx.compose.foundation.layout.Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre") },
+                    singleLine = true,
+                    modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = emoji,
+                    onValueChange = { emoji = it },
+                    label = { Text("Emoji (opcional)") },
+                    singleLine = true,
+                    modifier = androidx.compose.ui.Modifier.fillMaxWidth(0.4f)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (nombre.isNotBlank()) onAdd(nombre.trim(), emoji.trim()) },
+                enabled = nombre.isNotBlank()
+            ) { Text("Crear") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
 }

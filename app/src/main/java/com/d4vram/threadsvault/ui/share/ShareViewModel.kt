@@ -7,6 +7,7 @@ import com.d4vram.threadsvault.data.database.ThreadsVaultDatabase
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.database.entity.PostEntity
 import com.d4vram.threadsvault.data.repository.PostRepository
+import com.d4vram.threadsvault.utils.CategoryInputParser
 import com.d4vram.threadsvault.utils.ThreadsContentResolver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,6 +34,15 @@ class ShareViewModel(context: Context) : ViewModel() {
 
     private val _saveState = MutableStateFlow<ShareSaveState>(ShareSaveState.Idle)
     val saveState: StateFlow<ShareSaveState> = _saveState.asStateFlow()
+
+    fun addCategory(nombre: String, emoji: String) {
+        val parsed = CategoryInputParser.parse(nombre, emoji) ?: return
+        viewModelScope.launch {
+            db.categoryDao().insertar(
+                CategoryEntity(nombre = parsed.nombre, emoji = parsed.emoji)
+            )
+        }
+    }
 
     fun guardarSharedUrl(url: String, notas: String, categoria: String?) {
         viewModelScope.launch {

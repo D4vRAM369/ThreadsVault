@@ -43,7 +43,10 @@ class ShareReceiverActivity : ComponentActivity() {
                             categoria = category
                         )
                     },
-                    onCancel = { finish() }
+                    onCancel = { finish() },
+                    onAddCategory = { nombre, emoji ->
+                        viewModel.addCategory(nombre, emoji)
+                    }
                 )
             }
         }
