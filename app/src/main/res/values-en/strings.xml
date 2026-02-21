@@ -7,6 +7,7 @@
     <string name="state_loading">Loading…</string>
     <string name="state_empty">Your vault is still empty</string>
     <string name="state_empty_title">Vault ready to go</string>
+    <string name="state_empty_hint">Share from Threads or add a link manually to get started.</string>
     <string name="favorite_toggle">Toggle favorite</string>
     <string name="delete_action">Delete post</string>
     <string name="manual_add_placeholder">Add manually</string>

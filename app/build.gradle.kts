@@ -43,6 +43,11 @@ android {
     buildFeatures {
         compose = true
     }
+
+    lint {
+        // Avoid known lint analyzer crashes on test sources with Kotlin FIR/KSP.
+        checkTestSources = false
+    }
 }
 
 dependencies {

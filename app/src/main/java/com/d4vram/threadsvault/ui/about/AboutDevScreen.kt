@@ -2,7 +2,6 @@ package com.d4vram.threadsvault.ui.about
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -96,7 +95,8 @@ fun AboutDevScreen(
                         )
                         Text(
                             text = stringResource(id = R.string.about_dev_intro),
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
                         )
                         Text(
                             text = stringResource(id = R.string.about_dev_pbl),
@@ -170,7 +170,7 @@ fun AboutDevScreen(
                                 )
                             },
                             background = Color(0xFF60A5FA),
-                            textColor = Color(0xFF0F172A),
+                            textColor = Color.White,
                             onClick = {
                                 openExternalUrl(
                                     context = context,
@@ -207,8 +207,10 @@ private fun BadgeLink(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(min = 50.dp)
                 .padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
             icon()
             Text(

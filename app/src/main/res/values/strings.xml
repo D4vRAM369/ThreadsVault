@@ -7,6 +7,7 @@
     <string name="state_loading">Cargando...</string>
     <string name="state_empty">Tu boveda aun esta vacia</string>
     <string name="state_empty_title">Boveda lista para empezar</string>
+    <string name="state_empty_hint">Comparte desde Threads o agrega un enlace manual para empezar.</string>
     <string name="favorite_toggle">Cambiar favorito</string>
     <string name="delete_action">Borrar post</string>
     <string name="manual_add_placeholder">Agregar manualmente</string>
