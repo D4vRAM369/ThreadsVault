@@ -116,6 +116,7 @@ import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.database.entity.PostEntity
 import com.d4vram.threadsvault.ui.theme.VaultFavorite
+import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.MediaUrlUtils
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
@@ -857,34 +858,43 @@ private fun PostCard(
             }
 
             // Media
-            if (!post.imagenPath.isNullOrBlank()) {
-                Box(
-                    modifier = Modifier.clip(MaterialTheme.shapes.medium)
-                ) {
-                    AsyncImage(
-                        model = post.imagenPath,
-                        contentDescription = stringResource(id = R.string.preview_image_content_desc),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(16f / 9f)
-                    )
-                    if (MediaUrlUtils.isVideoUrl(post.imagenPath)) {
-                        Surface(
+            val mediaUrls = remember(post.mediaUrls, post.imagenPath) {
+                MediaUrlsCodec.mergeWithPrimary(post.mediaUrls, post.imagenPath)
+            }
+            if (mediaUrls.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(mediaUrls, key = { it }) { mediaUrl ->
+                        Box(
                             modifier = Modifier
-                                .align(Alignment.Center)
-                                .size(42.dp),
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
-                            shape = CircleShape
+                                .width(220.dp)
+                                .clip(MaterialTheme.shapes.medium)
                         ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
+                            AsyncImage(
+                                model = mediaUrl,
+                                contentDescription = stringResource(id = R.string.preview_image_content_desc),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(16f / 9f)
+                            )
+                            if (MediaUrlUtils.isVideoUrl(mediaUrl)) {
+                                Surface(
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .size(42.dp),
+                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
+                                    shape = CircleShape
+                                ) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.PlayArrow,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

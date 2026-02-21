@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.d4vram.threadsvault.data.database.dao.CategoryDao
 import com.d4vram.threadsvault.data.database.dao.PostDao
@@ -16,7 +17,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [PostEntity::class, CategoryEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class ThreadsVaultDatabase : RoomDatabase() {
@@ -34,9 +35,18 @@ abstract class ThreadsVaultDatabase : RoomDatabase() {
                     context.applicationContext,
                     ThreadsVaultDatabase::class.java,
                     "threadsvault_database"
-                ).addCallback(SeedCategoriesCallback).build()
+                )
+                    .addMigrations(MIGRATION_1_2)
+                    .addCallback(SeedCategoriesCallback)
+                    .build()
                 INSTANCE = instance
                 instance
+            }
+        }
+
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE posts ADD COLUMN mediaUrls TEXT")
             }
         }
 

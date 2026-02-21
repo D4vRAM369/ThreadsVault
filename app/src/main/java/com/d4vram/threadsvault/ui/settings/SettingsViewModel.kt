@@ -142,7 +142,8 @@ class SettingsViewModel(context: Context) : ViewModel() {
             _messageEvents.emit("Generando export CSV...")
             val file = withContext(Dispatchers.IO) {
                 val posts = postRepository.obtenerTodosDirecto()
-                ExportUtils.exportPostsCsv(appContext, posts)
+                val categories = db.categoryDao().obtenerTodasDirecto()
+                ExportUtils.exportPostsCsv(appContext, posts, categories)
             }
             _messageEvents.emit("Selecciona carpeta y nombre para guardar el CSV.")
             emitSaveRequest(
@@ -195,7 +196,8 @@ class SettingsViewModel(context: Context) : ViewModel() {
             _messageEvents.emit("Generando backup CSV...")
             val file = withContext(Dispatchers.IO) {
                 val posts = postRepository.obtenerTodosDirecto()
-                BackupUtils.exportBackupCsv(appContext, posts)
+                val categories = db.categoryDao().obtenerTodasDirecto()
+                BackupUtils.exportBackupCsv(appContext, posts, categories)
             }
             _messageEvents.emit("Selecciona carpeta y nombre para guardar el backup CSV.")
             emitSaveRequest(
@@ -242,21 +244,11 @@ class SettingsViewModel(context: Context) : ViewModel() {
             _messageEvents.emit("Restaurando backup CSV...")
             runCatching {
                 withContext(Dispatchers.IO) {
-                    val posts = appContext.contentResolver.openInputStream(uri)?.use { input ->
+                    val payload = appContext.contentResolver.openInputStream(uri)?.use { input ->
                         BackupUtils.parseBackupCsv(input)
                     } ?: error("No se pudo abrir el archivo CSV seleccionado.")
-
-                    val categories = posts
-                        .flatMap { post ->
-                            post.categorias.split(",").map { it.trim() }.filter { it.isNotBlank() }
-                        }
-                        .distinct()
-                        .map { name ->
-                            CategoryEntity(nombre = name)
-                        }
-                        .ifEmpty {
-                            listOf(CategoryEntity(nombre = "Sin categoría", color = "#757575"))
-                        }
+                    val posts = payload.posts
+                    val categories = payload.categories
 
                     db.withTransaction {
                         db.postDao().borrarTodos()
@@ -313,6 +305,10 @@ class SettingsViewModel(context: Context) : ViewModel() {
                 }
             }
         }
+    }
+
+    fun reorderCategories(orderedIds: List<Long>) {
+        updateCategoryOrder(orderedIds)
     }
 
 

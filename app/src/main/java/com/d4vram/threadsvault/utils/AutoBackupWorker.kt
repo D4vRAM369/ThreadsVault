@@ -25,8 +25,9 @@ class AutoBackupWorker(
 
             val db = ThreadsVaultDatabase.getDatabase(applicationContext)
             val posts = db.postDao().obtenerTodosDirecto()
+            val categories = db.categoryDao().obtenerTodasDirecto()
 
-            val temp = BackupUtils.exportBackupCsv(applicationContext, posts)
+            val temp = BackupUtils.exportBackupCsv(applicationContext, posts, categories)
             val tree = DocumentFile.fromTreeUri(applicationContext, folderUri.toUri())
                 ?: return Result.failure()
             if (!tree.canWrite()) return Result.failure()

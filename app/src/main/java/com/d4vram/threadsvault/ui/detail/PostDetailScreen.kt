@@ -8,6 +8,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,13 +23,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -60,7 +63,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.d4vram.threadsvault.R
+import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.MediaSaveUtils
+import com.d4vram.threadsvault.utils.MediaUrlUtils
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -137,8 +142,10 @@ fun PostDetailScreen(
                 }
             }
             is PostDetailUiState.Success -> {
-                val mediaUrl = uiState.post.imagenPath.orEmpty()
-                var showImageViewer by remember(mediaUrl) { mutableStateOf(false) }
+                val mediaUrls = remember(uiState.post.mediaUrls, uiState.post.imagenPath) {
+                    MediaUrlsCodec.mergeWithPrimary(uiState.post.mediaUrls, uiState.post.imagenPath)
+                }
+                var viewerUrl by remember(mediaUrls) { mutableStateOf<String?>(null) }
 
                 Column(
                     modifier = Modifier
@@ -230,17 +237,47 @@ fun PostDetailScreen(
                     }
 
                     // Media
-                    if (mediaUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = mediaUrl,
-                            contentDescription = stringResource(id = R.string.preview_image_content_desc),
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 140.dp, max = 420.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                                .clickable { showImageViewer = true }
-                        )
+                    if (mediaUrls.isNotEmpty()) {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            items(mediaUrls, key = { it }) { mediaUrl ->
+                                Box(
+                                    modifier = Modifier
+                                        .width(260.dp)
+                                        .heightIn(min = 140.dp, max = 420.dp)
+                                ) {
+                                    AsyncImage(
+                                        model = mediaUrl,
+                                        contentDescription = stringResource(id = R.string.preview_image_content_desc),
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(min = 140.dp, max = 420.dp)
+                                            .clip(MaterialTheme.shapes.medium)
+                                            .clickable { viewerUrl = mediaUrl }
+                                    )
+                                    if (MediaUrlUtils.isVideoUrl(mediaUrl)) {
+                                        Surface(
+                                            modifier = Modifier
+                                                .align(Alignment.Center)
+                                                .size(42.dp),
+                                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
+                                            shape = androidx.compose.foundation.shape.CircleShape
+                                        ) {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.PlayArrow,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     // Categories as FlowRow chips
@@ -285,10 +322,10 @@ fun PostDetailScreen(
                     Spacer(modifier = Modifier.height(32.dp))
                 }
 
-                if (showImageViewer && mediaUrl.isNotBlank()) {
+                if (!viewerUrl.isNullOrBlank()) {
                     ImageViewerDialog(
-                        imageUrl = mediaUrl,
-                        onDismiss = { showImageViewer = false }
+                        imageUrl = viewerUrl.orEmpty(),
+                        onDismiss = { viewerUrl = null }
                     )
                 }
             }

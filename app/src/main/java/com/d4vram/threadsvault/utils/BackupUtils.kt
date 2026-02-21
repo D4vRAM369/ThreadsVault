@@ -26,6 +26,11 @@ data class RestoreSummary(
     val importedCategories: Int
 )
 
+data class CsvBackupPayload(
+    val posts: List<PostEntity>,
+    val categories: List<CategoryEntity>
+)
+
 object BackupUtils {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -64,21 +69,26 @@ object BackupUtils {
 
     fun exportBackupCsv(
         context: Context,
-        posts: List<PostEntity>
+        posts: List<PostEntity>,
+        categories: List<CategoryEntity>
     ): File {
         val file = File(
             context.cacheDir,
             "threadsvault_backup_${System.currentTimeMillis()}.csv"
         )
+        val categoriesByName = categories.associateBy { it.nombre.trim().lowercase(Locale.ROOT) }
         val header = listOf(
             "url",
             "autor",
             "contenido",
             "imagen",
+            "media_urls",
             "fecha_guardado_iso",
             "fecha_guardado_ms",
             "fecha_post_ms",
             "categorias",
+            "categorias_colores",
+            "categorias_emojis",
             "etiquetas",
             "notas",
             "favorito",
@@ -86,15 +96,32 @@ object BackupUtils {
         ).joinToString(",")
 
         val body = posts.joinToString("\n") { post ->
+            val categoryNames = post.categorias
+                .split(",")
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+            val categoryColors = categoryNames
+                .map { name ->
+                    categoriesByName[name.lowercase(Locale.ROOT)]?.color ?: "#6200EE"
+                }
+                .joinToString("|")
+            val categoryEmojis = categoryNames
+                .map { name ->
+                    categoriesByName[name.lowercase(Locale.ROOT)]?.emoji.orEmpty()
+                }
+                .joinToString("|")
             listOf(
                 post.url,
                 post.autor,
                 normalizeMultiline(post.contenido),
                 post.imagenPath.orEmpty(),
+                post.mediaUrls.orEmpty(),
                 formatDate(post.fechaGuardado),
                 post.fechaGuardado.toString(),
                 post.fechaPost?.toString().orEmpty(),
                 post.categorias,
+                categoryColors,
+                categoryEmojis,
                 post.etiquetas,
                 normalizeMultiline(post.notas),
                 post.esFavorito.toString(),
@@ -106,10 +133,10 @@ object BackupUtils {
         return file
     }
 
-    fun parseBackupCsv(inputStream: InputStream): List<PostEntity> {
+    fun parseBackupCsv(inputStream: InputStream): CsvBackupPayload {
         val content = inputStream.bufferedReader().use { it.readText() }
         val rows = parseCsvRows(content)
-        if (rows.isEmpty()) return emptyList()
+        if (rows.isEmpty()) return CsvBackupPayload(emptyList(), emptyList())
 
         val header = rows.first().map { normalizeHeader(it) }
         val index = header.withIndex().associate { it.value to it.index }
@@ -119,19 +146,36 @@ object BackupUtils {
             return row.getOrElse(i) { "" }
         }
 
-        return rows.drop(1)
+        val categoryMap = linkedMapOf<String, CategoryEntity>()
+        val posts = rows.drop(1)
             .filter { row -> row.any { it.isNotBlank() } }
             .map { row ->
+                val categoriesCsv = value(row, "categorias")
+                val colorTokens = value(row, "categorias_colores").split("|").map { it.trim() }
+                val emojiTokens = value(row, "categorias_emojis").split("|").map { it.trim() }
+                val names = categoriesCsv.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                names.forEachIndexed { idx, name ->
+                    val key = name.lowercase(Locale.ROOT)
+                    if (!categoryMap.containsKey(key)) {
+                        categoryMap[key] = CategoryEntity(
+                            nombre = name,
+                            color = colorTokens.getOrNull(idx)?.takeIf { it.matches(Regex("^#[0-9A-Fa-f]{6}$")) }
+                                ?: "#6200EE",
+                            emoji = emojiTokens.getOrNull(idx).orEmpty()
+                        )
+                    }
+                }
                 PostEntity(
                     id = 0,
                     url = value(row, "url"),
                     autor = value(row, "autor"),
                     contenido = denormalizeMultiline(value(row, "contenido")),
                     imagenPath = value(row, "imagen", "imagenpath").ifBlank { null },
+                    mediaUrls = value(row, "media_urls", "mediaurls").ifBlank { null },
                     fechaGuardado = value(row, "fecha_guardado_ms", "fechaguardado").toLongOrNull()
                         ?: System.currentTimeMillis(),
                     fechaPost = value(row, "fecha_post_ms", "fechapost").toLongOrNull(),
-                    categorias = value(row, "categorias"),
+                    categorias = categoriesCsv,
                     etiquetas = value(row, "etiquetas"),
                     notas = denormalizeMultiline(value(row, "notas")),
                     esFavorito = value(row, "favorito", "esfavorito").toBooleanStrictOrNull() ?: false,
@@ -139,6 +183,10 @@ object BackupUtils {
                 )
             }
             .filter { it.url.isNotBlank() }
+        return CsvBackupPayload(
+            posts = posts,
+            categories = ensureFallbackCategory(categoryMap.values.toList())
+        )
     }
 
     private fun ensureFallbackCategory(categories: List<CategoryEntity>): List<CategoryEntity> {

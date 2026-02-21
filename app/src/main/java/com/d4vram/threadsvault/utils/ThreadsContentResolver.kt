@@ -5,7 +5,8 @@ import kotlinx.coroutines.withContext
 
 data class ResolvedThreadsContent(
     val content: String,
-    val mediaUrl: String?
+    val mediaUrl: String?,
+    val mediaUrls: List<String>
 )
 
 object ThreadsContentResolver {
@@ -14,11 +15,12 @@ object ThreadsContentResolver {
         val preview = withContext(Dispatchers.IO) {
             ThreadsLinkPreviewExtractor.extract(url)
         }
+        val resolvedMedia = (preview.imageUrls + preview.videoUrls).distinct()
 
         val content = if (preview.content.isNotBlank()) {
             preview.content
         } else {
-            preview.imageUrl
+            preview.imageUrls.firstOrNull()
                 ?.takeIf { it.isNotBlank() }
                 ?.let { ThreadsOcrExtractor.extractTextFromImageUrl(it) }
                 .orEmpty()
@@ -26,7 +28,8 @@ object ThreadsContentResolver {
 
         return ResolvedThreadsContent(
             content = ThreadsContentSanitizer.sanitize(content),
-            mediaUrl = preview.imageUrl ?: preview.videoUrl
+            mediaUrl = resolvedMedia.firstOrNull(),
+            mediaUrls = resolvedMedia
         )
     }
 }

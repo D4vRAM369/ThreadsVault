@@ -9,6 +9,7 @@ import com.d4vram.threadsvault.data.database.entity.PostEntity
 import com.d4vram.threadsvault.data.preferences.AppPreferences
 import com.d4vram.threadsvault.data.repository.PostRepository
 import com.d4vram.threadsvault.utils.CategoryInputParser
+import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.ThreadsContentResolver
 import com.d4vram.threadsvault.utils.applyCategoryOrder
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,6 +69,7 @@ class ShareViewModel(context: Context) : ViewModel() {
                         autor = author,
                         contenido = preview.content,
                         imagenPath = preview.mediaUrl,
+                        mediaUrls = MediaUrlsCodec.encode(preview.mediaUrls),
                         notas = notas.trim(),
                         categorias = categoria.orEmpty()
                     )

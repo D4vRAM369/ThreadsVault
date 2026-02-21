@@ -10,6 +10,7 @@ import com.d4vram.threadsvault.data.preferences.AppPreferences
 import com.d4vram.threadsvault.data.repository.PostRepository
 import com.d4vram.threadsvault.utils.applyCategoryOrder
 import com.d4vram.threadsvault.utils.CategoryInputParser
+import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.ThreadsContentResolver
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -170,7 +171,9 @@ class VaultViewModel(context: Context) : ViewModel() {
                 repository.actualizar(
                     post.copy(
                         contenido = preview.content.ifBlank { post.contenido },
-                        imagenPath = preview.mediaUrl ?: post.imagenPath
+                        imagenPath = preview.mediaUrl ?: post.imagenPath,
+                        mediaUrls = MediaUrlsCodec.encode(preview.mediaUrls).takeUnless { it.isNullOrBlank() }
+                            ?: post.mediaUrls
                     )
                 )
             }
@@ -201,7 +204,8 @@ class VaultViewModel(context: Context) : ViewModel() {
                         url = normalizedUrl,
                         autor = repository.parsearUrl(normalizedUrl),
                         contenido = preview.content,
-                        imagenPath = preview.mediaUrl
+                        imagenPath = preview.mediaUrl,
+                        mediaUrls = MediaUrlsCodec.encode(preview.mediaUrls)
                     )
                 )
             }

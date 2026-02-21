@@ -14,6 +14,7 @@ data class PostEntity(
     val autor: String = "",                 // @handle del autor
     val contenido: String = "",             // Texto del post
     val imagenPath: String? = null,         // Ruta local de imagen guardada
+    val mediaUrls: String? = null,          // JSON con todas las medias (imagenes/videos)
 
     val fechaGuardado: Long = System.currentTimeMillis(),  // Timestamp
     val fechaPost: Long? = null,            // Fecha original del post (si se extrae)

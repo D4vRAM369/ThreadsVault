@@ -4,8 +4,8 @@ import org.jsoup.Jsoup
 
 data class ThreadsLinkPreview(
     val content: String,
-    val imageUrl: String?,
-    val videoUrl: String?
+    val imageUrls: List<String>,
+    val videoUrls: List<String>
 )
 
 object ThreadsLinkPreviewExtractor {
@@ -23,26 +23,33 @@ object ThreadsLinkPreviewExtractor {
                 document.select("meta[name=twitter:description]").attr("content")
             ).orEmpty()
 
-            val image = firstNonBlank(
-                document.select("meta[property=og:image]").attr("content"),
-                document.select("meta[name=twitter:image]").attr("content")
+            val images = collectMetaUrls(
+                document.select("meta[property=og:image]").eachAttr("content"),
+                document.select("meta[name=twitter:image]").eachAttr("content")
             )
 
-            val video = firstNonBlank(
-                document.select("meta[property=og:video]").attr("content"),
-                document.select("meta[property=og:video:url]").attr("content"),
-                document.select("meta[property=og:video:secure_url]").attr("content"),
-                document.select("meta[name=twitter:card]").attr("content")
-                    .takeIf { it.equals("player", ignoreCase = true) }
-                    ?.let { document.select("meta[name=twitter:player:stream]").attr("content") },
-                document.select("meta[name=twitter:player:stream]").attr("content")
+            val videos = collectMetaUrls(
+                document.select("meta[property=og:video]").eachAttr("content"),
+                document.select("meta[property=og:video:url]").eachAttr("content"),
+                document.select("meta[property=og:video:secure_url]").eachAttr("content"),
+                document.select("meta[name=twitter:player:stream]").eachAttr("content")
             )
 
-            ThreadsLinkPreview(content = content, imageUrl = image, videoUrl = video)
-        }.getOrDefault(ThreadsLinkPreview(content = "", imageUrl = null, videoUrl = null))
+            ThreadsLinkPreview(content = content, imageUrls = images, videoUrls = videos)
+        }.getOrDefault(ThreadsLinkPreview(content = "", imageUrls = emptyList(), videoUrls = emptyList()))
     }
 
     private fun firstNonBlank(vararg values: String?): String? {
         return values.firstOrNull { !it.isNullOrBlank() }?.trim()
+    }
+
+    private fun collectMetaUrls(vararg groups: List<String>): List<String> {
+        return groups
+            .flatMap { it }
+            .mapNotNull { it?.trim() }
+            .flatMap { it.split(",") }
+            .map { it.trim() }
+            .filter { it.startsWith("http://") || it.startsWith("https://") }
+            .distinct()
     }
 }
