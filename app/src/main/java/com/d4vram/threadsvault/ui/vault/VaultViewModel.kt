@@ -43,6 +43,20 @@ class VaultViewModel(context: Context) : ViewModel() {
         .obtenerTodas()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val postCountsByCategory: StateFlow<Map<String, Int>> = repository.obtenerTodos()
+        .map { posts ->
+            val counts = mutableMapOf<String, Int>()
+            posts.forEach { post ->
+                if (post.categorias.isBlank()) return@forEach
+                post.categorias.split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .forEach { cat -> counts[cat] = (counts[cat] ?: 0) + 1 }
+            }
+            counts
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
     val uiState: StateFlow<VaultUiState> = combine(
         searchText, selectedCategory, _showFavoritesOnly
     ) { query, category, favOnly ->

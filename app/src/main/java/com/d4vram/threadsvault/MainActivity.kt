@@ -58,6 +58,7 @@ class MainActivity : ComponentActivity() {
             val categories by vaultViewModel.categories.collectAsState()
             val selectedCategory by vaultViewModel.currentCategory.collectAsState()
             val showFavoritesOnly by vaultViewModel.showFavoritesOnly.collectAsState()
+            val postCountsByCategory by vaultViewModel.postCountsByCategory.collectAsState()
             val themeMode by settingsViewModel.themeMode.collectAsState()
             val settingsCategories by settingsViewModel.categories.collectAsState()
             val autoBackupFolderUri by settingsViewModel.autoBackupFolderUri.collectAsState()
@@ -159,7 +160,8 @@ class MainActivity : ComponentActivity() {
                             },
                             onSearchAction = {},
                             onOpenSettings = { navController.navigate(AppRoute.SETTINGS) },
-                            onManualAdd = { showManualAdd = true }
+                            onManualAdd = { showManualAdd = true },
+                            postCountsByCategory = postCountsByCategory
                         )
                     }
                     composable(

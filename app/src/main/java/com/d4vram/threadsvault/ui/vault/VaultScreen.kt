@@ -129,7 +129,8 @@ fun VaultScreen(
     onOpenPost: (Long) -> Unit,
     onSearchAction: () -> Unit,
     onOpenSettings: () -> Unit,
-    onManualAdd: () -> Unit
+    onManualAdd: () -> Unit,
+    postCountsByCategory: Map<String, Int> = emptyMap()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingDeleted by remember { mutableStateOf<PostEntity?>(null) }
@@ -258,8 +259,15 @@ fun VaultScreen(
                             )
                         }
                         items(categories, key = { it.id }) { category ->
+                            val count = postCountsByCategory[category.nombre]
+                            val chipLabel = buildString {
+                                listOf(category.emoji, category.nombre)
+                                    .filter { it.isNotBlank() }
+                                    .joinTo(this, " ")
+                                if (count != null && count > 0) append(" ($count)")
+                            }
                             FilterCategoryChip(
-                                label = listOf(category.emoji, category.nombre).filter { it.isNotBlank() }.joinToString(" "),
+                                label = chipLabel,
                                 selected = selectedCategory == category.nombre,
                                 onClick = { onSelectCategory(category.nombre) },
                                 onLongClick = {
