@@ -263,6 +263,7 @@ fun VaultScreen(
                     Text(
                         text = stringResource(id = R.string.vault_quick_filters_label),
                         style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 6.dp)
                     )
@@ -471,39 +472,52 @@ private fun EmptyVaultState() {
             color = MaterialTheme.colorScheme.surfaceContainerLow,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp)
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Inventory2,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .size(72.dp),
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surfaceContainerLow,
+                                MaterialTheme.colorScheme.surface
+                            )
+                        )
                     )
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Inventory2,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .size(72.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
+                        )
+                    }
+                    Text(
+                        text = stringResource(id = R.string.state_empty_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = stringResource(id = R.string.state_empty_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 24.sp
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
                 }
-                Text(
-                    text = stringResource(id = R.string.state_empty_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = stringResource(id = R.string.state_empty_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 24.sp
-                )
-                Spacer(modifier = Modifier.height(2.dp))
             }
         }
     }
@@ -527,10 +541,17 @@ private fun FilterCategoryChip(
         animationSpec = tween(durationMillis = 200),
         label = "chip_text"
     )
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
+        animationSpec = tween(durationMillis = 200),
+        label = "chip_border"
+    )
     Surface(
         shape = MaterialTheme.shapes.medium,
-        tonalElevation = if (selected) 2.dp else 0.dp,
+        tonalElevation = if (selected) 3.dp else 0.dp,
         color = bgColor,
+        border = BorderStroke(1.dp, borderColor),
         modifier = Modifier.combinedClickable(
             onClick = onClick,
             onLongClick = onLongClick
@@ -542,6 +563,7 @@ private fun FilterCategoryChip(
                 .heightIn(min = 34.dp)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             color = textColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
