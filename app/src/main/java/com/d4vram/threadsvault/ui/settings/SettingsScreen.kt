@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -49,21 +50,31 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import kotlin.math.abs
 import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.preferences.ThemeMode
+import com.d4vram.threadsvault.ui.components.CategoryColorPickerDialog
+import com.d4vram.threadsvault.ui.components.parseHexColor
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -75,8 +86,8 @@ fun SettingsScreen(
     autoBackupIntervalHours: Int,
     categories: List<CategoryEntity>,
     onThemeModeChange: (ThemeMode) -> Unit,
-    onAddCategory: (String, String) -> Unit,
-    onEditCategory: (CategoryEntity, String, String) -> Unit,
+    onAddCategory: (String, String, String) -> Unit,
+    onEditCategory: (CategoryEntity, String, String, String) -> Unit,
     onDeleteCategory: (CategoryEntity) -> Unit,
     onReorderCategories: (List<Long>) -> Unit,
     onExportCsv: () -> Unit,
@@ -92,13 +103,24 @@ fun SettingsScreen(
 ) {
     var newCategory by remember { mutableStateOf("") }
     var newCategoryEmoji by remember { mutableStateOf("") }
+    var newCategoryColor by remember { mutableStateOf("#6200EE") }
+    var showNewCategoryColorDialog by remember { mutableStateOf(false) }
     var showRestoreConfirm by remember { mutableStateOf(false) }
     var pendingCategoryDelete by remember { mutableStateOf<CategoryEntity?>(null) }
     var pendingCategoryEdit by remember { mutableStateOf<CategoryEntity?>(null) }
-    var orderedCategories by remember(categories) { mutableStateOf(categories) }
-    var draggingCategoryId by remember { mutableStateOf<Long?>(null) }
-    var dragDeltaY by remember { mutableStateOf(0f) }
+    var orderedCategories by remember { mutableStateOf(categories) }
+    var draggedIndex by remember { mutableStateOf<Int?>(null) }
+    var draggedKey by remember { mutableStateOf<Long?>(null) }
+    var isDragging by remember { mutableStateOf(false) }
+    var dragOffset by remember { mutableStateOf(0f) }
     val categoryListState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(categories, isDragging) {
+        if (!isDragging) {
+            orderedCategories = categories
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -201,12 +223,25 @@ fun SettingsScreen(
                             textStyle = MaterialTheme.typography.bodyMedium,
                             singleLine = true
                         )
+                        IconButton(onClick = { showNewCategoryColorDialog = true }) {
+                            Surface(
+                                modifier = Modifier
+                                    .size(26.dp)
+                                    .clip(androidx.compose.foundation.shape.CircleShape),
+                                color = parseHexColor(newCategoryColor),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outlineVariant
+                                )
+                            ) {}
+                        }
                     }
                     FilledTonalButton(
                         onClick = {
-                            onAddCategory(newCategory, newCategoryEmoji)
+                            onAddCategory(newCategory, newCategoryEmoji, newCategoryColor)
                             newCategory = ""
                             newCategoryEmoji = ""
+                            newCategoryColor = "#6200EE"
                         }
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -216,10 +251,93 @@ fun SettingsScreen(
                 }
             }
 
-            itemsIndexed(orderedCategories, key = { _, category -> category.id }) { _, category ->
+            itemsIndexed(orderedCategories, key = { _, category -> category.id }) { index, category ->
+                val isDragged = isDragging && draggedKey == category.id
                 Surface(
-                    modifier = Modifier.animateItemPlacement(),
-                    color = if (draggingCategoryId == category.id) {
+                    modifier = Modifier
+                        .animateItemPlacement()
+                        .zIndex(if (isDragged) 1f else 0f)
+                        .graphicsLayer {
+                            translationY = if (isDragged) dragOffset else 0f
+                            alpha = if (isDragged) 0.88f else 1f
+                            scaleX = if (isDragged) 1.02f else 1f
+                            scaleY = if (isDragged) 1.02f else 1f
+                        }
+                        .alpha(if (isDragged) 0.92f else 1f)
+                        .pointerInput(category.id) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = {
+                                    draggedIndex = index
+                                    draggedKey = category.id
+                                    isDragging = true
+                                    dragOffset = 0f
+                                },
+                                onDragEnd = {
+                                    onReorderCategories(orderedCategories.map { it.id })
+                                    draggedIndex = null
+                                    draggedKey = null
+                                    isDragging = false
+                                    dragOffset = 0f
+                                },
+                                onDragCancel = {
+                                    draggedIndex = null
+                                    draggedKey = null
+                                    isDragging = false
+                                    dragOffset = 0f
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    dragOffset += dragAmount.y
+                                    
+                                    val currentKey = draggedKey ?: return@detectDragGesturesAfterLongPress
+                                    val currentIndex = orderedCategories.indexOfFirst { it.id == currentKey }
+                                    if (currentIndex < 0 || orderedCategories.size < 2) return@detectDragGesturesAfterLongPress
+
+                                    val currentInfo = categoryListState.layoutInfo.visibleItemsInfo
+                                        .firstOrNull { it.key == currentKey }
+                                        ?: return@detectDragGesturesAfterLongPress
+                                    val draggedCenter = currentInfo.offset + (currentInfo.size / 2f) + dragOffset
+                                    
+                                    val targetInfo = categoryListState.layoutInfo.visibleItemsInfo
+                                        .filter { it.key != currentKey }
+                                        .firstOrNull { info ->
+                                            val itemTop = info.offset.toFloat()
+                                            val itemBottom = (info.offset + info.size).toFloat()
+                                            draggedCenter in itemTop..itemBottom
+                                        }
+
+                                    if (targetInfo != null) {
+                                        val targetKey = targetInfo.key as? Long
+                                        val targetIndex = orderedCategories.indexOfFirst { it.id == targetKey }
+                                        if (targetIndex >= 0 && targetIndex != currentIndex) {
+                                            val list = orderedCategories.toMutableList()
+                                            list.add(targetIndex, list.removeAt(currentIndex))
+                                            orderedCategories = list
+                                            // The item is now at targetIndex. We need to update draggedIndex
+                                            // for consistency, although we should re-fetch it from the list anyway.
+                                            draggedIndex = targetIndex
+                                            // Compensate offset to keep the item visually under the finger
+                                            dragOffset += (currentInfo.offset - targetInfo.offset).toFloat()
+                                        }
+                                    }
+
+                                    // Improved Autoscroll with higher sensitivity
+                                    val layoutInfo = categoryListState.layoutInfo
+                                    val viewportStart = layoutInfo.viewportStartOffset
+                                    val viewportEnd = layoutInfo.viewportEndOffset
+                                    val edgeMargin = 100f
+                                    
+                                    if (draggedCenter < viewportStart + edgeMargin) {
+                                        val intensity = ((viewportStart + edgeMargin - draggedCenter) / edgeMargin).coerceIn(0f, 1f)
+                                        scope.launch { categoryListState.scrollBy(-40f * intensity) }
+                                    } else if (draggedCenter > viewportEnd - edgeMargin) {
+                                        val intensity = ((draggedCenter - (viewportEnd - edgeMargin)) / edgeMargin).coerceIn(0f, 1f)
+                                        scope.launch { categoryListState.scrollBy(40f * intensity) }
+                                    }
+                                }
+                            )
+                        },
+                    color = if (isDragged) {
                         MaterialTheme.colorScheme.primaryContainer
                     } else {
                         MaterialTheme.colorScheme.surfaceContainerHigh
@@ -237,46 +355,17 @@ fun SettingsScreen(
                             text = listOf(category.emoji, category.nombre).filter { it.isNotBlank() }.joinToString(" "),
                             style = MaterialTheme.typography.bodyLarge
                         )
+                        Surface(
+                            modifier = Modifier.size(12.dp),
+                            color = parseHexColor(category.color),
+                            shape = androidx.compose.foundation.shape.CircleShape
+                        ) {}
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             IconButton(
-                                modifier = Modifier.pointerInput(orderedCategories, category.id) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = {
-                                            draggingCategoryId = category.id
-                                            dragDeltaY = 0f
-                                        },
-                                        onDragEnd = {
-                                            draggingCategoryId = null
-                                            dragDeltaY = 0f
-                                            onReorderCategories(orderedCategories.map { it.id })
-                                        },
-                                        onDragCancel = {
-                                            draggingCategoryId = null
-                                            dragDeltaY = 0f
-                                        },
-                                        onDrag = { change, dragAmount ->
-                                            change.consume()
-                                            dragDeltaY += dragAmount.y
-                                            val fromIndex = orderedCategories.indexOfFirst { it.id == category.id }
-                                            if (fromIndex < 0 || orderedCategories.size < 2) return@detectDragGesturesAfterLongPress
-
-                                            val threshold = 56f
-                                            if (abs(dragDeltaY) >= threshold) {
-                                                val step = if (dragDeltaY > 0) 1 else -1
-                                                val toIndex = (fromIndex + step).coerceIn(0, orderedCategories.lastIndex)
-                                                if (toIndex != fromIndex) {
-                                                    orderedCategories = orderedCategories.toMutableList().apply {
-                                                        add(toIndex, removeAt(fromIndex))
-                                                    }
-                                                }
-                                                dragDeltaY = 0f
-                                            }
-                                        }
-                                    )
-                                },
-                                onClick = {}
+                                onClick = {},
+                                enabled = !isDragging
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.DragIndicator,
@@ -284,14 +373,20 @@ fun SettingsScreen(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            IconButton(onClick = { pendingCategoryEdit = category }) {
+                            IconButton(
+                                onClick = { pendingCategoryEdit = category },
+                                enabled = !isDragging
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = stringResource(id = R.string.edit_category_action),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            IconButton(onClick = { pendingCategoryDelete = category }) {
+                            IconButton(
+                                onClick = { pendingCategoryDelete = category },
+                                enabled = !isDragging
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = stringResource(id = R.string.delete_action),
@@ -486,9 +581,20 @@ fun SettingsScreen(
         EditCategoryDialog(
             category = target,
             onDismiss = { pendingCategoryEdit = null },
-            onSave = { name, emoji ->
-                onEditCategory(target, name, emoji)
+            onSave = { name, emoji, color ->
+                onEditCategory(target, name, emoji, color)
                 pendingCategoryEdit = null
+            }
+        )
+    }
+
+    if (showNewCategoryColorDialog) {
+        CategoryColorPickerDialog(
+            initialHex = newCategoryColor,
+            onDismiss = { showNewCategoryColorDialog = false },
+            onConfirm = { selectedHex ->
+                newCategoryColor = selectedHex
+                showNewCategoryColorDialog = false
             }
         )
     }
@@ -498,10 +604,12 @@ fun SettingsScreen(
 private fun EditCategoryDialog(
     category: CategoryEntity,
     onDismiss: () -> Unit,
-    onSave: (String, String) -> Unit
+    onSave: (String, String, String) -> Unit
 ) {
     var name by remember(category.id) { mutableStateOf(category.nombre) }
     var icon by remember(category.id) { mutableStateOf(category.emoji) }
+    var color by remember(category.id) { mutableStateOf(category.color) }
+    var showColorDialog by remember(category.id) { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -533,10 +641,22 @@ private fun EditCategoryDialog(
                     shape = MaterialTheme.shapes.medium,
                     singleLine = true
                 )
+                IconButton(onClick = { showColorDialog = true }) {
+                    Surface(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape),
+                        color = parseHexColor(color),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant
+                        )
+                    ) {}
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(name, icon) }) {
+            TextButton(onClick = { onSave(name, icon, color) }) {
                 Text(text = stringResource(id = R.string.save_action))
             }
         },
@@ -546,6 +666,17 @@ private fun EditCategoryDialog(
             }
         }
     )
+
+    if (showColorDialog) {
+        CategoryColorPickerDialog(
+            initialHex = color,
+            onDismiss = { showColorDialog = false },
+            onConfirm = { selectedHex ->
+                color = selectedHex
+                showColorDialog = false
+            }
+        )
+    }
 }
 
 @Composable

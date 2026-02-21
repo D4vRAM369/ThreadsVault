@@ -9,10 +9,10 @@ import com.d4vram.threadsvault.data.database.ThreadsVaultDatabase
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.preferences.AppPreferences
 import com.d4vram.threadsvault.data.preferences.ThemeMode
+import com.d4vram.threadsvault.data.repository.CategoryRepository
 import com.d4vram.threadsvault.data.repository.PostRepository
 import com.d4vram.threadsvault.utils.AutoBackupScheduler
 import com.d4vram.threadsvault.utils.BackupUtils
-import com.d4vram.threadsvault.utils.applyCategoryOrder
 import com.d4vram.threadsvault.utils.CategoryInputParser
 import com.d4vram.threadsvault.utils.ExportUtils
 import kotlinx.coroutines.Dispatchers
@@ -20,11 +20,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 
 data class SaveDocumentRequest(
@@ -40,6 +41,8 @@ class SettingsViewModel(context: Context) : ViewModel() {
     private val preferences = AppPreferences(appContext)
     private val db = ThreadsVaultDatabase.getDatabase(appContext)
     private val postRepository = PostRepository(db.postDao())
+    private val categoryRepository = CategoryRepository(db.categoryDao())
+    private val reorderMutex = Mutex()
 
     val themeMode: StateFlow<ThemeMode> = preferences.themeModeFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ThemeMode.SYSTEM)
@@ -48,12 +51,8 @@ class SettingsViewModel(context: Context) : ViewModel() {
     val autoBackupIntervalHours: StateFlow<Int> = preferences.autoBackupIntervalHoursFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 24)
 
-    val categories: StateFlow<List<CategoryEntity>> = combine(
-        db.categoryDao().obtenerTodas(),
-        preferences.categoryOrderFlow
-    ) { categories, orderedIds ->
-        applyCategoryOrder(categories, orderedIds)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val categories: StateFlow<List<CategoryEntity>> = categoryRepository.observeAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _saveDocumentEvents = MutableSharedFlow<SaveDocumentRequest>()
     val saveDocumentEvents = _saveDocumentEvents.asSharedFlow()
@@ -86,19 +85,17 @@ class SettingsViewModel(context: Context) : ViewModel() {
         }
     }
 
-    fun addCategory(nombre: String, emoji: String) {
-        val parsed = CategoryInputParser.parse(nombre, emoji) ?: return
+    fun addCategory(nombre: String, emoji: String, color: String) {
+        val parsed = CategoryInputParser.parse(nombre, emoji, color) ?: return
         viewModelScope.launch {
-            val id = db.categoryDao().insertar(
+            val id = categoryRepository.insert(
                 CategoryEntity(
                     nombre = parsed.nombre,
-                    emoji = parsed.emoji
+                    emoji = parsed.emoji,
+                    color = parsed.color
                 )
             )
-            if (id > 0L) {
-                val currentOrder = preferences.categoryOrderFlow.first()
-                preferences.setCategoryOrder(currentOrder + id)
-            }
+            if (id > 0L) categoryRepository.normalizeSortOrder()
         }
     }
 
@@ -110,15 +107,12 @@ class SettingsViewModel(context: Context) : ViewModel() {
         }
         viewModelScope.launch {
             db.categoryDao().borrar(category)
-            val currentOrder = preferences.categoryOrderFlow.first()
-            if (currentOrder.isNotEmpty()) {
-                preferences.setCategoryOrder(currentOrder.filterNot { it == category.id })
-            }
+            categoryRepository.normalizeSortOrder()
         }
     }
 
-    fun editCategory(category: CategoryEntity, nombre: String, emoji: String) {
-        val parsed = CategoryInputParser.parse(nombre, emoji) ?: return
+    fun editCategory(category: CategoryEntity, nombre: String, emoji: String, color: String) {
+        val parsed = CategoryInputParser.parse(nombre, emoji, color) ?: return
         viewModelScope.launch {
             val oldName = category.nombre
             val newName = parsed.nombre
@@ -126,7 +120,8 @@ class SettingsViewModel(context: Context) : ViewModel() {
                 db.categoryDao().actualizar(
                     category.copy(
                         nombre = newName,
-                        emoji = parsed.emoji
+                        emoji = parsed.emoji,
+                        color = parsed.color
                     )
                 )
                 if (!oldName.equals(newName, ignoreCase = true)) {
@@ -225,9 +220,8 @@ class SettingsViewModel(context: Context) : ViewModel() {
                         db.categoryDao().borrarTodas()
                         db.categoryDao().insertarTodas(payload.categories)
                         db.postDao().insertarTodos(payload.posts)
+                        categoryRepository.normalizeSortOrder()
                     }
-                    val ordered = db.categoryDao().obtenerTodasDirecto().map { it.id }
-                    preferences.setCategoryOrder(ordered)
 
                     payload
                 }
@@ -269,9 +263,8 @@ class SettingsViewModel(context: Context) : ViewModel() {
                         db.categoryDao().borrarTodas()
                         db.categoryDao().insertarTodas(categories)
                         db.postDao().insertarTodos(posts)
+                        categoryRepository.normalizeSortOrder()
                     }
-                    val ordered = db.categoryDao().obtenerTodasDirecto().map { it.id }
-                    preferences.setCategoryOrder(ordered)
 
                     posts.size to categories.size
                 }
@@ -312,11 +305,16 @@ class SettingsViewModel(context: Context) : ViewModel() {
         }
     }
 
-    fun reorderCategories(orderedIds: List<Long>) {
+    fun updateCategoryOrder(orderedIds: List<Long>) {
         viewModelScope.launch {
-            preferences.setCategoryOrder(orderedIds)
+            reorderMutex.withLock {
+                db.withTransaction {
+                    categoryRepository.reorderFromIds(orderedIds)
+                }
+            }
         }
     }
+
 
     private suspend fun configureAutoBackup() {
         val folderUri = preferences.autoBackupFolderUriFlow.first()
