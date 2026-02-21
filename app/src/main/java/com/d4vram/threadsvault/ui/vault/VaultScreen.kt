@@ -62,6 +62,7 @@ import androidx.compose.material.icons.rounded.Tag
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
@@ -439,7 +440,9 @@ fun VaultScreen(
                         ShimmerPostCardList()
                     }
                     is VaultUiState.Empty -> {
-                        EmptyVaultState()
+                        EmptyVaultState(
+                            modifier = Modifier.padding(bottom = 104.dp)
+                        )
                     }
                     is VaultUiState.Error -> {
                         Box(
@@ -566,15 +569,17 @@ fun VaultScreen(
 }
 
 @Composable
-private fun EmptyVaultState() {
+private fun EmptyVaultState(
+    modifier: Modifier = Modifier
+) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = 20.dp, vertical = 8.dp),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
@@ -792,8 +797,14 @@ private fun PostCard(
             }
 
             // Content
+            val hasOnlyRawUrl = post.contenido.trim().equals(post.url.trim(), ignoreCase = true)
+            val extractionNeedsRetry = (post.contenido.isBlank() || hasOnlyRawUrl) && post.imagenPath.isNullOrBlank()
             Text(
-                text = post.contenido.ifBlank { stringResource(id = R.string.no_content_text) },
+                text = if (extractionNeedsRetry) {
+                    stringResource(id = R.string.no_content_text)
+                } else {
+                    post.contenido
+                },
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyLarge,
@@ -905,21 +916,46 @@ private fun PostCard(
                 }
             }
 
+            if (post.notas.isNotBlank()) {
+                val notePreview = post.notas
+                    .lineSequence()
+                    .map { it.trim() }
+                    .firstOrNull { it.isNotBlank() }
+                    .orEmpty()
+                AssistChip(
+                    onClick = onEditNotes,
+                    leadingIcon = {
+                        Text(
+                            text = "\uD83D\uDCDD",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = notePreview,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                        labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        leadingIconContentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    ),
+                    border = AssistChipDefaults.assistChipBorder(
+                        enabled = true,
+                        borderColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.28f)
+                    )
+                )
+            }
+
             // Footer: Notes indicator + Favorite + Menu
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (post.notas.isNotBlank()) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Notes,
-                        contentDescription = stringResource(id = R.string.has_notes_indicator),
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.tertiary
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                }
                 Spacer(modifier = Modifier.weight(1f))
                 IconButton(
                     onClick = {
@@ -980,16 +1016,18 @@ private fun PostCard(
                                 onCopyUrl(post.url)
                             }
                         )
-                        DropdownMenuItem(
-                            leadingIcon = {
-                                Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
-                            },
-                            text = { Text(text = stringResource(id = R.string.retry_extraction_action)) },
-                            onClick = {
-                                menuExpanded = false
-                                onRetryExtraction()
-                            }
-                        )
+                        if (extractionNeedsRetry) {
+                            DropdownMenuItem(
+                                leadingIcon = {
+                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                                },
+                                text = { Text(text = stringResource(id = R.string.retry_extraction_action)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onRetryExtraction()
+                                }
+                            )
+                        }
                         DropdownMenuItem(
                             leadingIcon = {
                                 Icon(
@@ -1163,20 +1201,25 @@ private fun formatRelativeDate(timestamp: Long): String {
 
 private fun extractTopHashtags(posts: List<PostEntity>): List<String> {
     val counts = linkedMapOf<String, Int>()
-    val regex = Regex("""#([A-Za-z0-9_]{2,30})""")
+    val regex = Regex("""#([\p{L}\p{N}_]{2,40})""")
+
+    fun collectFromText(text: String) {
+        regex.findAll(text).forEach { match ->
+            val tag = match.groupValues[1].lowercase()
+            if (tag.isNotBlank()) {
+                counts[tag] = (counts[tag] ?: 0) + 1
+            }
+        }
+    }
+
     posts.forEach { post ->
         post.etiquetas
             .split(",")
             .map { it.trim().lowercase() }
             .filter { it.isNotBlank() }
             .forEach { tag -> counts[tag] = (counts[tag] ?: 0) + 1 }
-
-        if (post.etiquetas.isBlank()) {
-            regex.findAll(post.contenido).forEach { match ->
-                val tag = match.groupValues[1].lowercase()
-                counts[tag] = (counts[tag] ?: 0) + 1
-            }
-        }
+        collectFromText(post.contenido)
+        collectFromText(post.notas)
     }
     return counts.entries
         .sortedByDescending { it.value }

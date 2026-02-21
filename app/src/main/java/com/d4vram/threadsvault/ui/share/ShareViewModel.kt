@@ -6,13 +6,17 @@ import androidx.lifecycle.viewModelScope
 import com.d4vram.threadsvault.data.database.ThreadsVaultDatabase
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.database.entity.PostEntity
+import com.d4vram.threadsvault.data.preferences.AppPreferences
 import com.d4vram.threadsvault.data.repository.PostRepository
 import com.d4vram.threadsvault.utils.CategoryInputParser
 import com.d4vram.threadsvault.utils.ThreadsContentResolver
+import com.d4vram.threadsvault.utils.applyCategoryOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -26,11 +30,15 @@ sealed interface ShareSaveState {
 class ShareViewModel(context: Context) : ViewModel() {
 
     private val db = ThreadsVaultDatabase.getDatabase(context)
+    private val preferences = AppPreferences(context.applicationContext)
     private val postRepository = PostRepository(db.postDao())
 
-    val categories: StateFlow<List<CategoryEntity>> = db.categoryDao()
-        .obtenerTodas()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val categories: StateFlow<List<CategoryEntity>> = combine(
+        db.categoryDao().obtenerTodas(),
+        preferences.categoryOrderFlow
+    ) { categories, orderedIds ->
+        applyCategoryOrder(categories, orderedIds)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _saveState = MutableStateFlow<ShareSaveState>(ShareSaveState.Idle)
     val saveState: StateFlow<ShareSaveState> = _saveState.asStateFlow()
@@ -38,9 +46,13 @@ class ShareViewModel(context: Context) : ViewModel() {
     fun addCategory(nombre: String, emoji: String) {
         val parsed = CategoryInputParser.parse(nombre, emoji) ?: return
         viewModelScope.launch {
-            db.categoryDao().insertar(
+            val id = db.categoryDao().insertar(
                 CategoryEntity(nombre = parsed.nombre, emoji = parsed.emoji)
             )
+            if (id > 0L) {
+                val currentOrder = preferences.categoryOrderFlow.first()
+                preferences.setCategoryOrder(currentOrder + id)
+            }
         }
     }
 

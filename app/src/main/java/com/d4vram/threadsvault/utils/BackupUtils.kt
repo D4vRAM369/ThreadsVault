@@ -107,35 +107,35 @@ object BackupUtils {
     }
 
     fun parseBackupCsv(inputStream: InputStream): List<PostEntity> {
-        val lines = inputStream.bufferedReader().use { it.readLines() }
-        if (lines.isEmpty()) return emptyList()
+        val content = inputStream.bufferedReader().use { it.readText() }
+        val rows = parseCsvRows(content)
+        if (rows.isEmpty()) return emptyList()
 
-        val header = splitCsvLine(lines.first()).map { it.trim().lowercase(Locale.ROOT) }
+        val header = rows.first().map { normalizeHeader(it) }
         val index = header.withIndex().associate { it.value to it.index }
 
-        fun value(row: List<String>, key: String): String {
-            val i = index[key] ?: return ""
+        fun value(row: List<String>, vararg keys: String): String {
+            val i = keys.asSequence().mapNotNull { key -> index[normalizeHeader(key)] }.firstOrNull() ?: return ""
             return row.getOrElse(i) { "" }
         }
 
-        return lines.drop(1)
-            .filter { it.isNotBlank() }
-            .map { splitCsvLine(it) }
+        return rows.drop(1)
+            .filter { row -> row.any { it.isNotBlank() } }
             .map { row ->
                 PostEntity(
                     id = 0,
                     url = value(row, "url"),
                     autor = value(row, "autor"),
                     contenido = denormalizeMultiline(value(row, "contenido")),
-                    imagenPath = value(row, "imagen").ifBlank { null },
-                    fechaGuardado = value(row, "fecha_guardado_ms").toLongOrNull()
+                    imagenPath = value(row, "imagen", "imagenpath").ifBlank { null },
+                    fechaGuardado = value(row, "fecha_guardado_ms", "fechaguardado").toLongOrNull()
                         ?: System.currentTimeMillis(),
-                    fechaPost = value(row, "fecha_post_ms").toLongOrNull(),
+                    fechaPost = value(row, "fecha_post_ms", "fechapost").toLongOrNull(),
                     categorias = value(row, "categorias"),
                     etiquetas = value(row, "etiquetas"),
                     notas = denormalizeMultiline(value(row, "notas")),
-                    esFavorito = value(row, "favorito").toBooleanStrictOrNull() ?: false,
-                    fuentePWA = value(row, "fuente_pwa").toBooleanStrictOrNull() ?: false
+                    esFavorito = value(row, "favorito", "esfavorito").toBooleanStrictOrNull() ?: false,
+                    fuentePWA = value(row, "fuente_pwa", "fuentepwa").toBooleanStrictOrNull() ?: false
                 )
             }
             .filter { it.url.isNotBlank() }
@@ -183,6 +183,52 @@ object BackupUtils {
         out.add(current.toString())
         return out
     }
+
+    private fun parseCsvRows(content: String): List<List<String>> {
+        if (content.isBlank()) return emptyList()
+        val rows = mutableListOf<MutableList<String>>()
+        var row = mutableListOf<String>()
+        val cell = StringBuilder()
+        var inQuotes = false
+        var i = 0
+        while (i < content.length) {
+            val c = content[i]
+            when {
+                c == '"' && i + 1 < content.length && content[i + 1] == '"' && inQuotes -> {
+                    cell.append('"')
+                    i++
+                }
+                c == '"' -> inQuotes = !inQuotes
+                c == ',' && !inQuotes -> {
+                    row.add(cell.toString())
+                    cell.clear()
+                }
+                (c == '\n' || c == '\r') && !inQuotes -> {
+                    row.add(cell.toString())
+                    cell.clear()
+                    if (row.any { it.isNotBlank() }) {
+                        rows.add(row)
+                    }
+                    row = mutableListOf()
+                    if (c == '\r' && i + 1 < content.length && content[i + 1] == '\n') {
+                        i++
+                    }
+                }
+                else -> cell.append(c)
+            }
+            i++
+        }
+        if (cell.isNotEmpty() || row.isNotEmpty()) {
+            row.add(cell.toString())
+            if (row.any { it.isNotBlank() }) {
+                rows.add(row)
+            }
+        }
+        return rows
+    }
+
+    private fun normalizeHeader(value: String): String =
+        value.trim().lowercase(Locale.ROOT).replace("_", "")
 
     private fun normalizeMultiline(value: String): String =
         value.replace("\r\n", "\\n").replace("\n", "\\n")

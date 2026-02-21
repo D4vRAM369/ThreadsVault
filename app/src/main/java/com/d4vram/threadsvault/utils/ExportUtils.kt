@@ -13,7 +13,22 @@ object ExportUtils {
 
     fun exportPostsCsv(context: Context, posts: List<PostEntity>): File {
         val file = File(context.cacheDir, "threadsvault_export_${System.currentTimeMillis()}.csv")
-        val header = "id,url,autor,contenido,imagenPath,fechaGuardado,fechaPost,categorias,etiquetas,notas,esFavorito,fuentePWA"
+        val header = listOf(
+            "id",
+            "url",
+            "autor",
+            "contenido",
+            "imagen",
+            "fecha_guardado_iso",
+            "fecha_guardado_ms",
+            "fecha_post_iso",
+            "fecha_post_ms",
+            "categorias",
+            "etiquetas",
+            "notas",
+            "favorito",
+            "fuente_pwa"
+        ).joinToString(",")
         val body = posts.joinToString(separator = "\n") { post ->
             listOf(
                 post.id.toString(),
@@ -21,7 +36,9 @@ object ExportUtils {
                 post.autor,
                 post.contenido,
                 post.imagenPath.orEmpty(),
+                formatTimestamp(post.fechaGuardado),
                 post.fechaGuardado.toString(),
+                post.fechaPost?.let(::formatTimestamp).orEmpty(),
                 post.fechaPost?.toString().orEmpty(),
                 post.categorias,
                 post.etiquetas,

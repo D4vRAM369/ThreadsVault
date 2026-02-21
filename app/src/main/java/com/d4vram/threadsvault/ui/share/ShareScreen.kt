@@ -2,6 +2,8 @@ package com.d4vram.threadsvault.ui.share
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -9,8 +11,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -29,6 +29,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ShareScreen(
     sharedUrl: String,
@@ -54,30 +55,32 @@ fun ShareScreen(
     var notes by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var showAddCategory by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = onCancel,
+        sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 240.dp, max = 560.dp)
+                .heightIn(min = 220.dp, max = 520.dp)
                 .navigationBarsPadding()
                 .imePadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = false)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = stringResource(id = R.string.share_receiver_title),
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Card(
                     colors = CardDefaults.cardColors(
@@ -87,7 +90,7 @@ fun ShareScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
+                            .padding(10.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
@@ -96,7 +99,7 @@ fun ShareScreen(
                         )
                         Text(
                             text = sharedUrl,
-                            maxLines = 3,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
@@ -106,17 +109,27 @@ fun ShareScreen(
                     modifier = Modifier.fillMaxWidth(),
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text(text = stringResource(id = R.string.quick_notes_label)) }
+                    label = { Text(text = stringResource(id = R.string.quick_notes_label)) },
+                    singleLine = true
                 )
 
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(categories) { category ->
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    categories.forEach { category ->
                         val label = listOf(category.emoji, category.nombre)
-                            .filter { it.isNotBlank() }.joinToString(" ")
+                            .filter { it.isNotBlank() }
+                            .joinToString(" ")
                         FilterChip(
                             selected = selectedCategory == category.nombre,
                             onClick = { selectedCategory = category.nombre },
-                            label = { Text(text = label) },
+                            label = {
+                                Text(
+                                    text = label,
+                                    maxLines = 1
+                                )
+                            },
                             leadingIcon = {
                                 if (selectedCategory == category.nombre) {
                                     Text(text = "\u2713")
@@ -124,20 +137,18 @@ fun ShareScreen(
                             }
                         )
                     }
-                    item {
-                        FilterChip(
-                            selected = false,
-                            onClick = { showAddCategory = true },
-                            label = { Text(text = "Nueva") },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        )
-                    }
+                    FilterChip(
+                        selected = false,
+                        onClick = { showAddCategory = true },
+                        label = { Text(text = "Nueva") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    )
                 }
 
                 if (showAddCategory) {
@@ -158,24 +169,28 @@ fun ShareScreen(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TextButton(onClick = onCancel) {
+                TextButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = onCancel
+                ) {
                     Text(text = stringResource(id = R.string.cancel_action))
                 }
-            }
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onSave(notes, selectedCategory) },
-                enabled = saveState != ShareSaveState.Saving
-            ) {
-                Text(
-                    text = if (saveState == ShareSaveState.Saving) {
-                        stringResource(id = R.string.state_loading)
-                    } else {
-                        stringResource(id = R.string.save_in_threadsvault)
-                    }
-                )
+                Button(
+                    modifier = Modifier.weight(2f),
+                    onClick = { onSave(notes, selectedCategory) },
+                    enabled = saveState != ShareSaveState.Saving
+                ) {
+                    Text(
+                        text = if (saveState == ShareSaveState.Saving) {
+                            stringResource(id = R.string.state_loading)
+                        } else {
+                            stringResource(id = R.string.save_action)
+                        },
+                        maxLines = 1
+                    )
+                }
             }
         }
     }

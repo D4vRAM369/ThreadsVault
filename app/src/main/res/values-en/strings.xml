@@ -43,6 +43,7 @@
     <string name="new_category_emoji_label">Icon (optional)</string>
     <string name="add_category_action">Add category</string>
     <string name="edit_category_action">Edit category</string>
+    <string name="reorder_categories_action">Reorder categories</string>
     <string name="post_content_title">Link</string>
     <string name="extracted_content_title">Extracted content</string>
     <string name="add_category_short">+ Category</string>

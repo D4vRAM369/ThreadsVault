@@ -32,6 +32,9 @@ class AppPreferences(private val context: Context) {
     val hasSeenOnboardingFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[Keys.HAS_SEEN_ONBOARDING] ?: false
     }
+    val categoryOrderFlow: Flow<List<Long>> = context.dataStore.data.map { preferences ->
+        parseCategoryOrder(preferences[Keys.CATEGORY_ORDER].orEmpty())
+    }
 
     suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { preferences ->
@@ -62,10 +65,32 @@ class AppPreferences(private val context: Context) {
         }
     }
 
+    suspend fun setCategoryOrder(ids: List<Long>) {
+        val normalized = ids
+            .filter { it > 0L }
+            .distinct()
+        context.dataStore.edit { preferences ->
+            if (normalized.isEmpty()) {
+                preferences.remove(Keys.CATEGORY_ORDER)
+            } else {
+                preferences[Keys.CATEGORY_ORDER] = normalized.joinToString(",")
+            }
+        }
+    }
+
+    private fun parseCategoryOrder(raw: String): List<Long> {
+        if (raw.isBlank()) return emptyList()
+        return raw.split(",")
+            .mapNotNull { it.trim().toLongOrNull() }
+            .filter { it > 0L }
+            .distinct()
+    }
+
     private object Keys {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val AUTO_BACKUP_FOLDER_URI = stringPreferencesKey("auto_backup_folder_uri")
         val AUTO_BACKUP_INTERVAL_HOURS = intPreferencesKey("auto_backup_interval_hours")
         val HAS_SEEN_ONBOARDING = booleanPreferencesKey("has_seen_onboarding")
+        val CATEGORY_ORDER = stringPreferencesKey("category_order")
     }
 }

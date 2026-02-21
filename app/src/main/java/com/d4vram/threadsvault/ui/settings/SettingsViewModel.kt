@@ -12,6 +12,7 @@ import com.d4vram.threadsvault.data.preferences.ThemeMode
 import com.d4vram.threadsvault.data.repository.PostRepository
 import com.d4vram.threadsvault.utils.AutoBackupScheduler
 import com.d4vram.threadsvault.utils.BackupUtils
+import com.d4vram.threadsvault.utils.applyCategoryOrder
 import com.d4vram.threadsvault.utils.CategoryInputParser
 import com.d4vram.threadsvault.utils.ExportUtils
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -46,9 +48,12 @@ class SettingsViewModel(context: Context) : ViewModel() {
     val autoBackupIntervalHours: StateFlow<Int> = preferences.autoBackupIntervalHoursFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 24)
 
-    val categories: StateFlow<List<CategoryEntity>> = db.categoryDao()
-        .obtenerTodas()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val categories: StateFlow<List<CategoryEntity>> = combine(
+        db.categoryDao().obtenerTodas(),
+        preferences.categoryOrderFlow
+    ) { categories, orderedIds ->
+        applyCategoryOrder(categories, orderedIds)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _saveDocumentEvents = MutableSharedFlow<SaveDocumentRequest>()
     val saveDocumentEvents = _saveDocumentEvents.asSharedFlow()
@@ -84,12 +89,16 @@ class SettingsViewModel(context: Context) : ViewModel() {
     fun addCategory(nombre: String, emoji: String) {
         val parsed = CategoryInputParser.parse(nombre, emoji) ?: return
         viewModelScope.launch {
-            db.categoryDao().insertar(
+            val id = db.categoryDao().insertar(
                 CategoryEntity(
                     nombre = parsed.nombre,
                     emoji = parsed.emoji
                 )
             )
+            if (id > 0L) {
+                val currentOrder = preferences.categoryOrderFlow.first()
+                preferences.setCategoryOrder(currentOrder + id)
+            }
         }
     }
 
@@ -101,6 +110,10 @@ class SettingsViewModel(context: Context) : ViewModel() {
         }
         viewModelScope.launch {
             db.categoryDao().borrar(category)
+            val currentOrder = preferences.categoryOrderFlow.first()
+            if (currentOrder.isNotEmpty()) {
+                preferences.setCategoryOrder(currentOrder.filterNot { it == category.id })
+            }
         }
     }
 
@@ -213,6 +226,8 @@ class SettingsViewModel(context: Context) : ViewModel() {
                         db.categoryDao().insertarTodas(payload.categories)
                         db.postDao().insertarTodos(payload.posts)
                     }
+                    val ordered = db.categoryDao().obtenerTodasDirecto().map { it.id }
+                    preferences.setCategoryOrder(ordered)
 
                     payload
                 }
@@ -255,6 +270,8 @@ class SettingsViewModel(context: Context) : ViewModel() {
                         db.categoryDao().insertarTodas(categories)
                         db.postDao().insertarTodos(posts)
                     }
+                    val ordered = db.categoryDao().obtenerTodasDirecto().map { it.id }
+                    preferences.setCategoryOrder(ordered)
 
                     posts.size to categories.size
                 }
@@ -292,6 +309,12 @@ class SettingsViewModel(context: Context) : ViewModel() {
             }.onFailure { error ->
                 _messageEvents.emit("Error al guardar: ${error.message ?: "desconocido"}")
             }
+        }
+    }
+
+    fun reorderCategories(orderedIds: List<Long>) {
+        viewModelScope.launch {
+            preferences.setCategoryOrder(orderedIds)
         }
     }
 

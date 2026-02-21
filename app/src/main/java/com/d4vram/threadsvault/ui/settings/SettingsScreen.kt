@@ -12,12 +12,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Info
@@ -49,12 +53,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlin.math.abs
 import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.preferences.ThemeMode
@@ -72,6 +78,7 @@ fun SettingsScreen(
     onAddCategory: (String, String) -> Unit,
     onEditCategory: (CategoryEntity, String, String) -> Unit,
     onDeleteCategory: (CategoryEntity) -> Unit,
+    onReorderCategories: (List<Long>) -> Unit,
     onExportCsv: () -> Unit,
     onExportPdf: () -> Unit,
     onBackupJson: () -> Unit,
@@ -88,6 +95,10 @@ fun SettingsScreen(
     var showRestoreConfirm by remember { mutableStateOf(false) }
     var pendingCategoryDelete by remember { mutableStateOf<CategoryEntity?>(null) }
     var pendingCategoryEdit by remember { mutableStateOf<CategoryEntity?>(null) }
+    var orderedCategories by remember(categories) { mutableStateOf(categories) }
+    var draggingCategoryId by remember { mutableStateOf<Long?>(null) }
+    var dragDeltaY by remember { mutableStateOf(0f) }
+    val categoryListState = rememberLazyListState()
 
     Scaffold(
         topBar = {
@@ -115,6 +126,7 @@ fun SettingsScreen(
         }
     ) { padding ->
         LazyColumn(
+            state = categoryListState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -204,10 +216,14 @@ fun SettingsScreen(
                 }
             }
 
-            items(categories, key = { it.id }) { category ->
+            itemsIndexed(orderedCategories, key = { _, category -> category.id }) { _, category ->
                 Surface(
                     modifier = Modifier.animateItemPlacement(),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    color = if (draggingCategoryId == category.id) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    },
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Row(
@@ -224,6 +240,50 @@ fun SettingsScreen(
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            IconButton(
+                                modifier = Modifier.pointerInput(orderedCategories, category.id) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = {
+                                            draggingCategoryId = category.id
+                                            dragDeltaY = 0f
+                                        },
+                                        onDragEnd = {
+                                            draggingCategoryId = null
+                                            dragDeltaY = 0f
+                                            onReorderCategories(orderedCategories.map { it.id })
+                                        },
+                                        onDragCancel = {
+                                            draggingCategoryId = null
+                                            dragDeltaY = 0f
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            change.consume()
+                                            dragDeltaY += dragAmount.y
+                                            val fromIndex = orderedCategories.indexOfFirst { it.id == category.id }
+                                            if (fromIndex < 0 || orderedCategories.size < 2) return@detectDragGesturesAfterLongPress
+
+                                            val threshold = 56f
+                                            if (abs(dragDeltaY) >= threshold) {
+                                                val step = if (dragDeltaY > 0) 1 else -1
+                                                val toIndex = (fromIndex + step).coerceIn(0, orderedCategories.lastIndex)
+                                                if (toIndex != fromIndex) {
+                                                    orderedCategories = orderedCategories.toMutableList().apply {
+                                                        add(toIndex, removeAt(fromIndex))
+                                                    }
+                                                }
+                                                dragDeltaY = 0f
+                                            }
+                                        }
+                                    )
+                                },
+                                onClick = {}
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DragIndicator,
+                                    contentDescription = stringResource(id = R.string.reorder_categories_action),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                             IconButton(onClick = { pendingCategoryEdit = category }) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,

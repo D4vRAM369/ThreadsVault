@@ -190,6 +190,7 @@ class MainActivity : ComponentActivity() {
                             onAddCategory = settingsViewModel::addCategory,
                             onEditCategory = settingsViewModel::editCategory,
                             onDeleteCategory = settingsViewModel::deleteCategory,
+                            onReorderCategories = settingsViewModel::reorderCategories,
                             onExportCsv = settingsViewModel::exportCsv,
                             onExportPdf = settingsViewModel::exportPdf,
                             onBackupJson = settingsViewModel::backupJson,

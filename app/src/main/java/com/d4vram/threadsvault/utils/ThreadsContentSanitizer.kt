@@ -14,7 +14,7 @@ object ThreadsContentSanitizer {
             .joinToString(separator = "\n")
             .trim()
 
-        return if (cleaned.length < 20) "" else cleaned
+        return cleaned
     }
 
     private fun looksLikeUrlNoise(line: String): Boolean {
