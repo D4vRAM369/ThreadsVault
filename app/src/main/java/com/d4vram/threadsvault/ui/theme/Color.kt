@@ -2,49 +2,49 @@ package com.d4vram.threadsvault.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── ThreadsVault Identity Palette ──
-// Primary: Morado profundo
-val VaultPrimary = Color(0xFF7C4DFF)
-val VaultPrimaryLight = Color(0xFFB388FF)
-val VaultPrimaryDark = Color(0xFF5E35B1)
+// ── ThreadsVault Identity Palette (D4vRAM brand) ──
+// Primary: Signature Purple
+val VaultPrimary = Color(0xFF6D44E5)
+val VaultPrimaryLight = Color(0xFF9A7BFF)
+val VaultPrimaryDark = Color(0xFF4B2FB2)
 
-// Secondary: Cyan
-val VaultSecondary = Color(0xFF00BCD4)
-val VaultSecondaryLight = Color(0xFF4DD0E1)
-val VaultSecondaryDark = Color(0xFF00838F)
+// Secondary: Technical Cyan
+val VaultSecondary = Color(0xFF22B8CF)
+val VaultSecondaryLight = Color(0xFF7ADAEA)
+val VaultSecondaryDark = Color(0xFF148AA3)
 
-// Tertiary: Teal
-val VaultTertiary = Color(0xFF26A69A)
-val VaultTertiaryLight = Color(0xFF80CBC4)
-val VaultTertiaryDark = Color(0xFF00897B)
+// Tertiary: Warm Highlight Magenta
+val VaultTertiary = Color(0xFFE85D9E)
+val VaultTertiaryLight = Color(0xFFF3A2C7)
+val VaultTertiaryDark = Color(0xFFB73A77)
 
 // Error
 val VaultError = Color(0xFFEF5350)
 val VaultErrorDark = Color(0xFFCF6679)
 
 // Favorito
-val VaultFavorite = Color(0xFFFF4081)
+val VaultFavorite = Color(0xFFE85D9E)
 
 // ── Dark Theme ──
-val VaultBackgroundDark = Color(0xFF0F0A1E)
-val VaultSurfaceDark = Color(0xFF1A1033)
-val VaultSurfaceContainerDark = Color(0xFF1E1440)
-val VaultSurfaceContainerHighDark = Color(0xFF251A4D)
-val VaultSurfaceVariantDark = Color(0xFF2D2150)
-val VaultOnBackgroundDark = Color(0xFFE8E0F0)
-val VaultOnSurfaceDark = Color(0xFFE8E0F0)
-val VaultOnSurfaceVariantDark = Color(0xFFBDB0D0)
-val VaultOutlineDark = Color(0xFF4A3D6B)
-val VaultOutlineVariantDark = Color(0xFF352A55)
+val VaultBackgroundDark = Color(0xFF111420)
+val VaultSurfaceDark = Color(0xFF181C2A)
+val VaultSurfaceContainerDark = Color(0xFF1F2434)
+val VaultSurfaceContainerHighDark = Color(0xFF262C3E)
+val VaultSurfaceVariantDark = Color(0xFF2D3448)
+val VaultOnBackgroundDark = Color(0xFFE6E9F2)
+val VaultOnSurfaceDark = Color(0xFFE6E9F2)
+val VaultOnSurfaceVariantDark = Color(0xFFB6BED0)
+val VaultOutlineDark = Color(0xFF4B5670)
+val VaultOutlineVariantDark = Color(0xFF353E54)
 
 // ── Light Theme ──
-val VaultBackgroundLight = Color(0xFFF6F7FB)
+val VaultBackgroundLight = Color(0xFFF4F6FB)
 val VaultSurfaceLight = Color(0xFFFFFFFF)
-val VaultSurfaceContainerLight = Color(0xFFF1F3F8)
-val VaultSurfaceContainerHighLight = Color(0xFFEAEEF5)
-val VaultSurfaceVariantLight = Color(0xFFE7EBF2)
-val VaultOnBackgroundLight = Color(0xFF1A1D27)
-val VaultOnSurfaceLight = Color(0xFF1A1D27)
-val VaultOnSurfaceVariantLight = Color(0xFF4B5362)
-val VaultOutlineLight = Color(0xFF9AA3B2)
-val VaultOutlineVariantLight = Color(0xFFCCD3DE)
+val VaultSurfaceContainerLight = Color(0xFFF0ECFB)
+val VaultSurfaceContainerHighLight = Color(0xFFEAE4F8)
+val VaultSurfaceVariantLight = Color(0xFFE4DEFA)
+val VaultOnBackgroundLight = Color(0xFF1E2230)
+val VaultOnSurfaceLight = Color(0xFF1E2230)
+val VaultOnSurfaceVariantLight = Color(0xFF495168)
+val VaultOutlineLight = Color(0xFF97A3B8)
+val VaultOutlineVariantLight = Color(0xFFC8D1DF)

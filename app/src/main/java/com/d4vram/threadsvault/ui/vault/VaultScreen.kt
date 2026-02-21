@@ -74,6 +74,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -151,6 +152,10 @@ fun VaultScreen(
     val deletedMessage = stringResource(id = R.string.post_deleted_message)
     val undoLabel = stringResource(id = R.string.undo_action)
     val copiedMessage = stringResource(id = R.string.url_copied_message)
+    val postCount = when (uiState) {
+        is VaultUiState.Success -> uiState.posts.size
+        else -> 0
+    }
 
     LaunchedEffect(pendingDeleted) {
         val deleted = pendingDeleted ?: return@LaunchedEffect
@@ -235,13 +240,21 @@ fun VaultScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.surfaceContainerLowest
+                        )
+                    )
+                )
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             ElevatedCard(
                 shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                 )
             ) {
                 Column(
@@ -257,16 +270,41 @@ fun VaultScreen(
                         placeholder = { Text(text = stringResource(id = R.string.search_label)) },
                         leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
                         shape = MaterialTheme.shapes.large,
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)
+                        )
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-                    Text(
-                        text = stringResource(id = R.string.vault_quick_filters_label),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 6.dp)
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.vault_quick_filters_label),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(999.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text(
+                                text = "$postCount",
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceContainer,
                         shape = MaterialTheme.shapes.large,
@@ -478,7 +516,7 @@ private fun EmptyVaultState() {
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.surfaceContainerLow,
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.24f),
                                 MaterialTheme.colorScheme.surface
                             )
                         )
@@ -489,6 +527,18 @@ private fun EmptyVaultState() {
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp)
                 ) {
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                    ) {
+                        Text(
+                            text = "Start your private vault",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                     Surface(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
@@ -532,17 +582,17 @@ private fun FilterCategoryChip(
     onLongClick: (() -> Unit)? = null
 ) {
     val bgColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
         animationSpec = tween(durationMillis = 200),
         label = "chip_bg"
     )
     val textColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = tween(durationMillis = 200),
         label = "chip_text"
     )
     val borderColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+        targetValue = if (selected) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
         animationSpec = tween(durationMillis = 200),
         label = "chip_border"
