@@ -16,6 +16,18 @@
 
 ThreadsVault is an Android app for saving, organizing, and keeping your favorite Threads posts easily accessible in a local vault.
 
+## Release v1.0.0
+
+This repository is ready for a public GitHub release (`v1.0.0`).
+
+- `README.md` documents installation, features, privacy, and build steps.
+- `CHANGELOG.md` contains the public release notes and a future `Unreleased` section.
+- Release build is configured with minification and resource shrinking enabled.
+
+### Download (GitHub Releases)
+
+Publish the generated APK/AAB under the GitHub Releases page and attach the `v1.0.0` notes from `CHANGELOG.md`.
+
 ## Why this app
 
 Threads in my experience, is quite good for discovering content, news, AI or programming tools (according to my personal preferences), and other interests.
@@ -28,6 +40,7 @@ For this reason, I decided to create an Android app with a vault where I can sen
 - Save Threads links from Android Share Sheet.
 - Manual link add from inside the app.
 - Link preview extraction and content parsing.
+- Clickable hyperlinks inside saved post content.
 - OCR text extraction from post images.
 - Quick notes per saved item.
 - Categories with optional emoji.
@@ -59,6 +72,11 @@ Este proyecto ha sido creado mediante **PBL (Aprendizaje Basado en Proyectos)**,
 - No Firebase.
 - No crash tracking service.
 
+## Limitations (v1.0.0)
+
+- Video extraction is still limited compared to image/OCR support.
+- OCR quality depends on the source image quality and text clarity.
+
 ## Tech stack
 
 - Kotlin
@@ -84,6 +102,10 @@ Commands:
 ./gradlew :app:assembleDebug
 ./gradlew :app:assembleRelease
 ```
+
+Release artifact output (default local path after build):
+
+- `app/build/outputs/apk/release/`
 
 ## Current size note
 

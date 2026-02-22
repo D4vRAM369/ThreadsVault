@@ -63,6 +63,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.d4vram.threadsvault.R
+import com.d4vram.threadsvault.ui.components.LinkifiedText
 import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.MediaSaveUtils
 import com.d4vram.threadsvault.utils.MediaUrlUtils
@@ -227,7 +228,7 @@ fun PostDetailScreen(
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Text(
+                        LinkifiedText(
                             text = uiState.post.contenido.ifBlank { stringResource(id = R.string.no_content_text) },
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier

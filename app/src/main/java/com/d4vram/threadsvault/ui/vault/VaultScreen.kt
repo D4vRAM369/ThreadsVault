@@ -115,6 +115,7 @@ import coil.compose.AsyncImage
 import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.database.entity.PostEntity
+import com.d4vram.threadsvault.ui.components.LinkifiedText
 import com.d4vram.threadsvault.ui.theme.VaultFavorite
 import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.MediaUrlUtils
@@ -800,7 +801,7 @@ private fun PostCard(
             // Content
             val hasOnlyRawUrl = post.contenido.trim().equals(post.url.trim(), ignoreCase = true)
             val extractionNeedsRetry = (post.contenido.isBlank() || hasOnlyRawUrl) && post.imagenPath.isNullOrBlank()
-            Text(
+            LinkifiedText(
                 text = if (extractionNeedsRetry) {
                     stringResource(id = R.string.no_content_text)
                 } else {
