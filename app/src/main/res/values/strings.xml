@@ -26,6 +26,8 @@
     <string name="copy_url_action">Copiar URL</string>
     <string name="url_copied_message">URL copiada al portapapeles</string>
     <string name="save_action">Guardar</string>
+    <string name="create_action">Crear</string>
+    <string name="ok_action">OK</string>
     <string name="undo_action">Deshacer</string>
     <string name="post_deleted_message">Post eliminado</string>
     <string name="theme_mode_title">Tema de la aplicacion</string>
@@ -40,7 +42,10 @@
     <string name="retry_extraction_action">Reintentar extracción</string>
     <string name="categories_title">Categorias</string>
     <string name="new_category_label">Nueva categoria</string>
+    <string name="new_category_dialog_title">Nueva categoria</string>
     <string name="new_category_emoji_label">Icono (opcional)</string>
+    <string name="emoji_optional_label">Emoji (opcional)</string>
+    <string name="name_label">Nombre</string>
     <string name="add_category_action">Agregar categoria</string>
     <string name="edit_category_action">Editar categoria</string>
     <string name="reorder_categories_action">Reordenar categorias</string>
@@ -74,6 +79,8 @@
     <string name="download_image_title">Descargar imagen</string>
     <string name="download_image_message">Mantener pulsado permite guardar en galeria.</string>
     <string name="download_action">Descargar</string>
+    <string name="color_label">Color</string>
+    <string name="hex_color_label">Hex (#RRGGBB)</string>
     <string name="section_appearance">Apariencia</string>
     <string name="notes_section_title">Notas</string>
     <string name="favorites_filter_label">Favoritos</string>
@@ -86,4 +93,9 @@
     <string name="about_dev_github_action">Perfil de GitHub</string>
     <string name="about_dev_star_action">Dame una estrella</string>
     <string name="about_dev_coffee_action">Invitar un cafe</string>
+    <string name="post_already_saved_message">Este post ya estaba guardado en tu boveda</string>
+    <string name="save_error_generic">No se pudo guardar el post. Intentalo de nuevo.</string>
+    <string name="manual_add_saved_message">Post guardado en ThreadsVault</string>
+    <string name="save_cancelled_message">Guardado cancelado.</string>
+    <string name="folder_selection_cancelled_message">Seleccion de carpeta cancelada.</string>
 </resources>

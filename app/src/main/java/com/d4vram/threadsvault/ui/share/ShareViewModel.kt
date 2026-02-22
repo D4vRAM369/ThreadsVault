@@ -25,10 +25,12 @@ sealed interface ShareSaveState {
     data object Idle : ShareSaveState
     data object Saving : ShareSaveState
     data object Saved : ShareSaveState
+    data object Duplicate : ShareSaveState
     data class Error(val message: String) : ShareSaveState
 }
 
 class ShareViewModel(context: Context) : ViewModel() {
+    private val appContext = context.applicationContext
 
     private val db = ThreadsVaultDatabase.getDatabase(context)
     private val preferences = AppPreferences(context.applicationContext)
@@ -61,11 +63,16 @@ class ShareViewModel(context: Context) : ViewModel() {
         viewModelScope.launch {
             _saveState.value = ShareSaveState.Saving
             runCatching {
-                val preview = ThreadsContentResolver.resolve(url)
-                val author = postRepository.parsearUrl(url)
+                val normalizedUrl = url.trim()
+                if (postRepository.obtenerPorUrl(normalizedUrl) != null) {
+                    _saveState.value = ShareSaveState.Duplicate
+                    return@launch
+                }
+                val preview = ThreadsContentResolver.resolve(normalizedUrl)
+                val author = postRepository.parsearUrl(normalizedUrl)
                 postRepository.insertar(
                     PostEntity(
-                        url = url,
+                        url = normalizedUrl,
                         autor = author,
                         contenido = preview.content,
                         imagenPath = preview.mediaUrl,
@@ -78,7 +85,7 @@ class ShareViewModel(context: Context) : ViewModel() {
                 _saveState.value = ShareSaveState.Saved
             }.onFailure { throwable ->
                 _saveState.value = ShareSaveState.Error(
-                    throwable.message ?: "Unknown save error"
+                    throwable.message ?: appContext.getString(com.d4vram.threadsvault.R.string.save_error_generic)
                 )
             }
         }

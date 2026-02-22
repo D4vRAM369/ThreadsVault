@@ -140,7 +140,7 @@ fun ShareScreen(
                     FilterChip(
                         selected = false,
                         onClick = { showAddCategory = true },
-                        label = { Text(text = "Nueva") },
+                        label = { Text(text = stringResource(id = R.string.add_category_short)) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Add,
@@ -163,8 +163,17 @@ fun ShareScreen(
                 }
             }
 
-            if (saveState is ShareSaveState.Error) {
-                Text(text = saveState.message)
+            if (saveState is ShareSaveState.Error || saveState is ShareSaveState.Duplicate) {
+                val message = when (saveState) {
+                    is ShareSaveState.Error -> saveState.message
+                    ShareSaveState.Duplicate -> stringResource(id = R.string.post_already_saved_message)
+                    else -> ""
+                }
+                Text(
+                    text = message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
 
             Row(
@@ -204,7 +213,7 @@ private fun AddCategoryInlineDialog(
     var emoji by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nueva categoría") },
+        title = { Text(stringResource(id = R.string.new_category_dialog_title)) },
         text = {
             androidx.compose.foundation.layout.Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -212,14 +221,14 @@ private fun AddCategoryInlineDialog(
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it },
-                    label = { Text("Nombre") },
+                    label = { Text(stringResource(id = R.string.name_label)) },
                     singleLine = true,
                     modifier = androidx.compose.ui.Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = emoji,
                     onValueChange = { emoji = it },
-                    label = { Text("Emoji (opcional)") },
+                    label = { Text(stringResource(id = R.string.emoji_optional_label)) },
                     singleLine = true,
                     modifier = androidx.compose.ui.Modifier.fillMaxWidth(0.4f)
                 )
@@ -229,10 +238,10 @@ private fun AddCategoryInlineDialog(
             TextButton(
                 onClick = { if (nombre.isNotBlank()) onAdd(nombre.trim(), emoji.trim()) },
                 enabled = nombre.isNotBlank()
-            ) { Text("Crear") }
+            ) { Text(stringResource(id = R.string.create_action)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss) { Text(stringResource(id = R.string.cancel_action)) }
         }
     )
 }

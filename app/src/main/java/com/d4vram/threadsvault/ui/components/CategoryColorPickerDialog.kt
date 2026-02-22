@@ -9,7 +9,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
+import com.d4vram.threadsvault.R
 import java.util.Locale
 
 @Composable
@@ -21,23 +23,23 @@ fun CategoryColorPickerDialog(
     var value by remember(initialHex) { mutableStateOf(initialHex) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Color") },
+        title = { Text(stringResource(id = R.string.color_label)) },
         text = {
             OutlinedTextField(
                 value = value,
                 onValueChange = { value = it },
-                label = { Text("Hex (#RRGGBB)") },
+                label = { Text(stringResource(id = R.string.hex_color_label)) },
                 singleLine = true
             )
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(normalizeHex(value)) }) {
-                Text("OK")
+                Text(stringResource(id = R.string.ok_action))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(id = R.string.cancel_action))
             }
         }
     )

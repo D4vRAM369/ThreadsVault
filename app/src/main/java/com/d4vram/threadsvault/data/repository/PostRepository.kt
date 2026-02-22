@@ -10,6 +10,7 @@ class PostRepository(
     fun obtenerTodos(): Flow<List<PostEntity>> = postDao.obtenerTodos()
 
     suspend fun obtenerTodosDirecto(): List<PostEntity> = postDao.obtenerTodosDirecto()
+    suspend fun obtenerPorUrl(url: String): PostEntity? = postDao.obtenerPorUrl(url)
 
     fun buscar(texto: String): Flow<List<PostEntity>> = postDao.buscar(texto)
 

@@ -21,6 +21,9 @@ interface PostDao {
     @Query("SELECT * FROM posts ORDER BY fechaGuardado DESC")
     suspend fun obtenerTodosDirecto(): List<PostEntity>
 
+    @Query("SELECT * FROM posts WHERE url = :url LIMIT 1")
+    suspend fun obtenerPorUrl(url: String): PostEntity?
+
     // ── Buscar por texto ───────────────────────────────
     @Query(
         """
@@ -28,6 +31,7 @@ interface PostDao {
         WHERE contenido LIKE '%' || :texto || '%' 
            OR autor LIKE '%' || :texto || '%'
            OR etiquetas LIKE '%' || :texto || '%'
+           OR notas LIKE '%' || :texto || '%'
         ORDER BY fechaGuardado DESC
     """
     )

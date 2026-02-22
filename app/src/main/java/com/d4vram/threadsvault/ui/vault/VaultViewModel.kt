@@ -8,14 +8,17 @@ import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.database.entity.PostEntity
 import com.d4vram.threadsvault.data.preferences.AppPreferences
 import com.d4vram.threadsvault.data.repository.PostRepository
+import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.utils.applyCategoryOrder
 import com.d4vram.threadsvault.utils.CategoryInputParser
 import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.ThreadsContentResolver
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.first
@@ -34,6 +37,7 @@ sealed interface VaultUiState {
 class VaultViewModel(context: Context) : ViewModel() {
 
     private val db = ThreadsVaultDatabase.getDatabase(context)
+    private val appContext = context.applicationContext
     private val preferences = AppPreferences(context.applicationContext)
     private val repository = PostRepository(db.postDao())
 
@@ -43,6 +47,8 @@ class VaultViewModel(context: Context) : ViewModel() {
     val currentCategory: StateFlow<String?> = selectedCategory
     private val _showFavoritesOnly = MutableStateFlow(false)
     val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly
+    private val _messageEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val messageEvents: SharedFlow<String> = _messageEvents
 
     val categories: StateFlow<List<CategoryEntity>> = combine(
         db.categoryDao().obtenerTodas(),
@@ -198,6 +204,10 @@ class VaultViewModel(context: Context) : ViewModel() {
         viewModelScope.launch {
             runCatching {
                 val normalizedUrl = url.trim()
+                if (repository.obtenerPorUrl(normalizedUrl) != null) {
+                    _messageEvents.tryEmit(appContext.getString(R.string.post_already_saved_message))
+                    return@launch
+                }
                 val preview = ThreadsContentResolver.resolve(normalizedUrl)
                 repository.insertar(
                     PostEntity(
@@ -208,6 +218,9 @@ class VaultViewModel(context: Context) : ViewModel() {
                         mediaUrls = MediaUrlsCodec.encode(preview.mediaUrls)
                     )
                 )
+                _messageEvents.tryEmit(appContext.getString(R.string.manual_add_saved_message))
+            }.onFailure {
+                _messageEvents.tryEmit(it.message ?: appContext.getString(R.string.save_error_generic))
             }
         }
     }

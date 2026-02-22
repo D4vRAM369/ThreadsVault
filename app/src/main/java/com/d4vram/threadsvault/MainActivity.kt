@@ -62,8 +62,10 @@ class MainActivity : ComponentActivity() {
             val themeMode by settingsViewModel.themeMode.collectAsState()
             val settingsCategories by settingsViewModel.categories.collectAsState()
             val autoBackupFolderUri by settingsViewModel.autoBackupFolderUri.collectAsState()
-            val autoBackupIntervalHours by settingsViewModel.autoBackupIntervalHours.collectAsState()
-            var showManualAdd by remember { mutableStateOf(false) }
+                val autoBackupIntervalHours by settingsViewModel.autoBackupIntervalHours.collectAsState()
+                val saveCancelledMessage = stringResource(id = R.string.save_cancelled_message)
+                val folderSelectionCancelledMessage = stringResource(id = R.string.folder_selection_cancelled_message)
+                var showManualAdd by remember { mutableStateOf(false) }
             var pendingSaveRequest by remember { mutableStateOf<SaveDocumentRequest?>(null) }
             val restoreLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.OpenDocument()
@@ -74,19 +76,19 @@ class MainActivity : ComponentActivity() {
             }
             val saveDocumentLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.CreateDocument("*/*")
-            ) { uri ->
-                val request = pendingSaveRequest
-                if (request != null) {
-                    settingsViewModel.saveDocumentToUri(request, uri)
-                } else if (uri == null) {
-                    Toast.makeText(context, "Guardado cancelado.", Toast.LENGTH_SHORT).show()
+                ) { uri ->
+                    val request = pendingSaveRequest
+                    if (request != null) {
+                        settingsViewModel.saveDocumentToUri(request, uri)
+                    } else if (uri == null) {
+                        Toast.makeText(context, saveCancelledMessage, Toast.LENGTH_SHORT).show()
+                    }
+                    pendingSaveRequest = null
                 }
-                pendingSaveRequest = null
-            }
             val restoreCsvLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.OpenDocument()
-            ) { uri ->
-                if (uri != null) {
+                ) { uri ->
+                    if (uri != null) {
                     settingsViewModel.restoreCsv(uri)
                 }
             }
@@ -101,11 +103,11 @@ class MainActivity : ComponentActivity() {
                                 android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                         )
                     }
-                    settingsViewModel.setAutoBackupFolderUri(uri.toString())
-                } else {
-                    Toast.makeText(context, "Seleccion de carpeta cancelada.", Toast.LENGTH_SHORT).show()
+                        settingsViewModel.setAutoBackupFolderUri(uri.toString())
+                    } else {
+                        Toast.makeText(context, folderSelectionCancelledMessage, Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
 
             ThreadsVaultTheme(themeMode = themeMode) {
                 LaunchedEffect(settingsViewModel) {
@@ -117,6 +119,11 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(settingsViewModel) {
                     settingsViewModel.messageEvents.collectLatest { message ->
                         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                    }
+                }
+                LaunchedEffect(vaultViewModel) {
+                    vaultViewModel.messageEvents.collectLatest { message ->
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     }
                 }
 

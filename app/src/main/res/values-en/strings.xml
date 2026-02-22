@@ -26,6 +26,8 @@
     <string name="copy_url_action">Copy URL</string>
     <string name="url_copied_message">URL copied to clipboard</string>
     <string name="save_action">Save</string>
+    <string name="create_action">Create</string>
+    <string name="ok_action">OK</string>
     <string name="undo_action">Undo</string>
     <string name="post_deleted_message">Post deleted</string>
     <string name="theme_mode_title">App theme</string>
@@ -40,7 +42,10 @@
     <string name="retry_extraction_action">Retry extraction</string>
     <string name="categories_title">Categories</string>
     <string name="new_category_label">New category</string>
+    <string name="new_category_dialog_title">New category</string>
     <string name="new_category_emoji_label">Icon (optional)</string>
+    <string name="emoji_optional_label">Emoji (optional)</string>
+    <string name="name_label">Name</string>
     <string name="add_category_action">Add category</string>
     <string name="edit_category_action">Edit category</string>
     <string name="reorder_categories_action">Reorder categories</string>
@@ -74,6 +79,8 @@
     <string name="download_image_title">Download image</string>
     <string name="download_image_message">Long press allows saving to gallery.</string>
     <string name="download_action">Download</string>
+    <string name="color_label">Color</string>
+    <string name="hex_color_label">Hex (#RRGGBB)</string>
     <string name="section_appearance">Appearance</string>
     <string name="notes_section_title">Notes</string>
     <string name="favorites_filter_label">Favorites</string>
@@ -86,4 +93,9 @@
     <string name="about_dev_github_action">GitHub Profile</string>
     <string name="about_dev_star_action">Give me a Star</string>
     <string name="about_dev_coffee_action">Buy Me a Coffee</string>
+    <string name="post_already_saved_message">This post is already saved in your vault</string>
+    <string name="save_error_generic">Could not save the post. Please try again.</string>
+    <string name="manual_add_saved_message">Post saved to ThreadsVault</string>
+    <string name="save_cancelled_message">Save canceled.</string>
+    <string name="folder_selection_cancelled_message">Folder selection canceled.</string>
 </resources>

@@ -348,7 +348,7 @@ fun VaultScreen(
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
                             unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
                             focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                         )
                     )
                     Row(
