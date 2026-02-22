@@ -13,6 +13,7 @@ import com.d4vram.threadsvault.utils.applyCategoryOrder
 import com.d4vram.threadsvault.utils.CategoryInputParser
 import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.ThreadsContentResolver
+import com.d4vram.threadsvault.utils.ThreadsThreadParser
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,7 +29,7 @@ import kotlinx.coroutines.launch
 
 sealed interface VaultUiState {
     data object Loading : VaultUiState
-    data class Success(val posts: List<PostEntity>) : VaultUiState
+    data class Success(val postGroups: List<List<PostEntity>>) : VaultUiState
     data object Empty : VaultUiState
     data class Error(val message: String) : VaultUiState
 }
@@ -89,10 +90,14 @@ class VaultViewModel(context: Context) : ViewModel() {
                         .contains(category)
                 }
             }
-            filtered
+            val grouped = filtered.groupBy { it.threadGroupId ?: it.id.toString() }
+                .values
+                .map { group -> group.sortedBy { it.threadPosition } }
+                .sortedByDescending { group -> group.first().fechaGuardado }
+            grouped
         }
-    }.map { posts ->
-        if (posts.isEmpty()) VaultUiState.Empty else VaultUiState.Success(posts)
+    }.map { postGroups ->
+        if (postGroups.isEmpty()) VaultUiState.Empty else VaultUiState.Success(postGroups)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -179,7 +184,8 @@ class VaultViewModel(context: Context) : ViewModel() {
                         contenido = preview.content.ifBlank { post.contenido },
                         imagenPath = preview.mediaUrl ?: post.imagenPath,
                         mediaUrls = MediaUrlsCodec.encode(preview.mediaUrls).takeUnless { it.isNullOrBlank() }
-                            ?: post.mediaUrls
+                            ?: post.mediaUrls,
+                        authorAvatarUrl = preview.authorAvatarUrl ?: post.authorAvatarUrl
                     )
                 )
             }
@@ -203,22 +209,44 @@ class VaultViewModel(context: Context) : ViewModel() {
         if (url.isBlank()) return
         viewModelScope.launch {
             runCatching {
-                val normalizedUrl = url.trim()
-                if (repository.obtenerPorUrl(normalizedUrl) != null) {
-                    _messageEvents.tryEmit(appContext.getString(R.string.post_already_saved_message))
-                    return@launch
-                }
-                val preview = ThreadsContentResolver.resolve(normalizedUrl)
-                repository.insertar(
-                    PostEntity(
-                        url = normalizedUrl,
-                        autor = repository.parsearUrl(normalizedUrl),
-                        contenido = preview.content,
-                        imagenPath = preview.mediaUrl,
-                        mediaUrls = MediaUrlsCodec.encode(preview.mediaUrls)
+                val normalizedUrl = ThreadsThreadParser.canonicalizePostUrl(url) ?: url.trim()
+                val rootPreview = ThreadsContentResolver.resolve(normalizedUrl)
+                val threadUrls = rootPreview.threadPostUrls
+                    .mapNotNull(ThreadsThreadParser::canonicalizePostUrl)
+                    .ifEmpty { listOf(normalizedUrl) }
+                    .take(12)
+                val threadGroupId = ThreadsThreadParser.buildThreadGroupId(threadUrls).takeIf { threadUrls.size > 1 }
+
+                var insertedCount = 0
+                threadUrls.forEachIndexed { index, threadUrl ->
+                    if (repository.obtenerPorUrl(threadUrl) != null) return@forEachIndexed
+
+                    val preview = if (threadUrl == normalizedUrl) {
+                        rootPreview
+                    } else {
+                        ThreadsContentResolver.resolve(threadUrl, includeThreadPostUrls = false)
+                    }
+
+                    repository.insertar(
+                        PostEntity(
+                            url = threadUrl,
+                            autor = repository.parsearUrl(threadUrl),
+                            contenido = preview.content,
+                            imagenPath = preview.mediaUrl,
+                            mediaUrls = MediaUrlsCodec.encode(preview.mediaUrls),
+                            authorAvatarUrl = preview.authorAvatarUrl,
+                            threadGroupId = threadGroupId,
+                            threadPosition = index
+                        )
                     )
-                )
-                _messageEvents.tryEmit(appContext.getString(R.string.manual_add_saved_message))
+                    insertedCount++
+                }
+
+                if (insertedCount == 0) {
+                    _messageEvents.tryEmit(appContext.getString(R.string.post_already_saved_message))
+                } else {
+                    _messageEvents.tryEmit(appContext.getString(R.string.manual_add_saved_message))
+                }
             }.onFailure {
                 _messageEvents.tryEmit(it.message ?: appContext.getString(R.string.save_error_generic))
             }

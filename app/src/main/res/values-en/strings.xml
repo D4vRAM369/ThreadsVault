@@ -83,6 +83,9 @@
     <string name="hex_color_label">Hex (#RRGGBB)</string>
     <string name="section_appearance">Appearance</string>
     <string name="notes_section_title">Notes</string>
+    <string name="thread_post_position_label">Thread: post %1$d of %2$d</string>
+    <string name="previous_post_action">Previous</string>
+    <string name="next_post_action">Next</string>
     <string name="favorites_filter_label">Favorites</string>
     <string name="about_dev_title">About the Dev</string>
     <string name="about_dev_action">Open about the dev</string>

@@ -182,7 +182,9 @@ class MainActivity : ComponentActivity() {
                         val detailUiState by detailViewModel.uiState.collectAsState()
                         PostDetailScreen(
                             uiState = detailUiState,
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            onPreviousInThread = detailViewModel::irAlAnteriorEnHilo,
+                            onNextInThread = detailViewModel::irAlSiguienteEnHilo
                         )
                     }
                     composable(AppRoute.SETTINGS) {

@@ -49,6 +49,15 @@ interface PostDao {
     @Query("SELECT * FROM posts WHERE id = :id")
     suspend fun obtenerPorId(id: Long): PostEntity?
 
+    @Query(
+        """
+        SELECT * FROM posts
+        WHERE threadGroupId = :threadGroupId
+        ORDER BY threadPosition ASC, fechaGuardado ASC, id ASC
+        """
+    )
+    suspend fun obtenerPorThreadGroupId(threadGroupId: String): List<PostEntity>
+
     // ── Actualizar ─────────────────────────────────────
     @Update
     suspend fun actualizar(post: PostEntity)

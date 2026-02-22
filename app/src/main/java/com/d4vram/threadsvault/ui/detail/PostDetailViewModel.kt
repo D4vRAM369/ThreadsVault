@@ -13,7 +13,11 @@ import kotlinx.coroutines.launch
 
 sealed interface PostDetailUiState {
     data object Loading : PostDetailUiState
-    data class Success(val post: PostEntity) : PostDetailUiState
+    data class Success(
+        val post: PostEntity,
+        val threadPosts: List<PostEntity> = listOf(post),
+        val currentThreadIndex: Int = 0
+    ) : PostDetailUiState
     data object Empty : PostDetailUiState
     data class Error(val message: String) : PostDetailUiState
 }
@@ -31,6 +35,18 @@ class PostDetailViewModel(context: Context, postId: Long) : ViewModel() {
         cargarPost(postId)
     }
 
+    fun irAlSiguienteEnHilo() {
+        val current = _uiState.value as? PostDetailUiState.Success ?: return
+        val next = current.threadPosts.getOrNull(current.currentThreadIndex + 1) ?: return
+        cargarPost(next.id)
+    }
+
+    fun irAlAnteriorEnHilo() {
+        val current = _uiState.value as? PostDetailUiState.Success ?: return
+        val previous = current.threadPosts.getOrNull(current.currentThreadIndex - 1) ?: return
+        cargarPost(previous.id)
+    }
+
     private fun cargarPost(postId: Long) {
         viewModelScope.launch {
             runCatching {
@@ -39,7 +55,17 @@ class PostDetailViewModel(context: Context, postId: Long) : ViewModel() {
                 _uiState.value = if (post == null) {
                     PostDetailUiState.Empty
                 } else {
-                    PostDetailUiState.Success(post)
+                    val threadPosts = post.threadGroupId
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { repository.obtenerPorThreadGroupId(it) }
+                        ?.ifEmpty { null }
+                        ?: listOf(post)
+                    val currentIndex = threadPosts.indexOfFirst { it.id == post.id }.coerceAtLeast(0)
+                    PostDetailUiState.Success(
+                        post = threadPosts[currentIndex],
+                        threadPosts = threadPosts,
+                        currentThreadIndex = currentIndex
+                    )
                 }
             }.onFailure { throwable ->
                 _uiState.value = PostDetailUiState.Error(throwable.message ?: "Error")

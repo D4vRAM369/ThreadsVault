@@ -11,6 +11,7 @@ import com.d4vram.threadsvault.data.repository.PostRepository
 import com.d4vram.threadsvault.utils.CategoryInputParser
 import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.ThreadsContentResolver
+import com.d4vram.threadsvault.utils.ThreadsThreadParser
 import com.d4vram.threadsvault.utils.applyCategoryOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -63,26 +64,48 @@ class ShareViewModel(context: Context) : ViewModel() {
         viewModelScope.launch {
             _saveState.value = ShareSaveState.Saving
             runCatching {
-                val normalizedUrl = url.trim()
-                if (postRepository.obtenerPorUrl(normalizedUrl) != null) {
+                val normalizedUrl = ThreadsThreadParser.canonicalizePostUrl(url) ?: url.trim()
+                val rootPreview = ThreadsContentResolver.resolve(normalizedUrl)
+                val threadUrls = rootPreview.threadPostUrls
+                    .mapNotNull(ThreadsThreadParser::canonicalizePostUrl)
+                    .ifEmpty { listOf(normalizedUrl) }
+                    .take(12)
+                val threadGroupId = ThreadsThreadParser.buildThreadGroupId(threadUrls).takeIf { threadUrls.size > 1 }
+
+                var insertedCount = 0
+                threadUrls.forEachIndexed { index, threadUrl ->
+                    if (postRepository.obtenerPorUrl(threadUrl) != null) return@forEachIndexed
+
+                    val preview = if (threadUrl == normalizedUrl) {
+                        rootPreview
+                    } else {
+                        ThreadsContentResolver.resolve(threadUrl, includeThreadPostUrls = false)
+                    }
+
+                    postRepository.insertar(
+                        PostEntity(
+                            url = threadUrl,
+                            autor = postRepository.parsearUrl(threadUrl),
+                            contenido = preview.content,
+                            imagenPath = preview.mediaUrl,
+                            mediaUrls = MediaUrlsCodec.encode(preview.mediaUrls),
+                            notas = if (index == 0) notas.trim() else "",
+                            categorias = categoria.orEmpty(),
+                            threadGroupId = threadGroupId,
+                            threadPosition = index
+                        )
+                    )
+                    insertedCount++
+                }
+
+                if (insertedCount == 0) {
                     _saveState.value = ShareSaveState.Duplicate
                     return@launch
                 }
-                val preview = ThreadsContentResolver.resolve(normalizedUrl)
-                val author = postRepository.parsearUrl(normalizedUrl)
-                postRepository.insertar(
-                    PostEntity(
-                        url = normalizedUrl,
-                        autor = author,
-                        contenido = preview.content,
-                        imagenPath = preview.mediaUrl,
-                        mediaUrls = MediaUrlsCodec.encode(preview.mediaUrls),
-                        notas = notas.trim(),
-                        categorias = categoria.orEmpty()
-                    )
-                )
             }.onSuccess {
-                _saveState.value = ShareSaveState.Saved
+                if (_saveState.value != ShareSaveState.Duplicate) {
+                    _saveState.value = ShareSaveState.Saved
+                }
             }.onFailure { throwable ->
                 _saveState.value = ShareSaveState.Error(
                     throwable.message ?: appContext.getString(com.d4vram.threadsvault.R.string.save_error_generic)

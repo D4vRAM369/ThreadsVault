@@ -6,12 +6,14 @@ import kotlinx.coroutines.withContext
 data class ResolvedThreadsContent(
     val content: String,
     val mediaUrl: String?,
-    val mediaUrls: List<String>
+    val mediaUrls: List<String>,
+    val authorAvatarUrl: String? = null,
+    val threadPostUrls: List<String> = emptyList()
 )
 
 object ThreadsContentResolver {
 
-    suspend fun resolve(url: String): ResolvedThreadsContent {
+    suspend fun resolve(url: String, includeThreadPostUrls: Boolean = true): ResolvedThreadsContent {
         val preview = withContext(Dispatchers.IO) {
             ThreadsLinkPreviewExtractor.extract(url)
         }
@@ -29,7 +31,9 @@ object ThreadsContentResolver {
         return ResolvedThreadsContent(
             content = ThreadsContentSanitizer.sanitize(content),
             mediaUrl = resolvedMedia.firstOrNull(),
-            mediaUrls = resolvedMedia
+            mediaUrls = resolvedMedia,
+            authorAvatarUrl = preview.authorAvatarUrl,
+            threadPostUrls = if (includeThreadPostUrls) preview.threadPostUrls else emptyList()
         )
     }
 }

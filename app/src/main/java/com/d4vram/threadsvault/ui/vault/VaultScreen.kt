@@ -157,11 +157,11 @@ fun VaultScreen(
     val undoLabel = stringResource(id = R.string.undo_action)
     val copiedMessage = stringResource(id = R.string.url_copied_message)
     val postCount = when (uiState) {
-        is VaultUiState.Success -> uiState.posts.size
+        is VaultUiState.Success -> uiState.postGroups.size
         else -> 0
     }
     val topHashtags = when (uiState) {
-        is VaultUiState.Success -> extractTopHashtags(uiState.posts)
+        is VaultUiState.Success -> extractTopHashtags(uiState.postGroups.flatten())
         else -> emptyList()
     }
 
@@ -463,8 +463,9 @@ fun VaultScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 120.dp)
                         ) {
-                            items(state.posts, key = { it.id }) { post ->
-                                val firstCat = post.categorias.split(",")
+                            items(state.postGroups, key = { it.first().id }) { postGroup ->
+                                val firstPost = postGroup.first()
+                                val firstCat = firstPost.categorias.split(",")
                                     .map { it.trim() }.firstOrNull { it.isNotBlank() }
                                 val accentColor = firstCat?.let { name ->
                                     categories.find { it.nombre == name }?.color?.let { hex ->
@@ -479,26 +480,26 @@ fun VaultScreen(
                                     }
                                 }
                                 var visible by remember { mutableStateOf(false) }
+                                LaunchedEffect(firstPost.id) { visible = true }
                                 val cardAlpha by animateFloatAsState(
                                     targetValue = if (visible) 1f else 0f,
                                     animationSpec = tween(250),
                                     label = "card_fade"
                                 )
-                                LaunchedEffect(Unit) { visible = true }
-                                PostCard(
-                                    post = post,
+                                PostGroupCard(
+                                    postGroup = postGroup,
                                     modifier = Modifier.animateItemPlacement().alpha(cardAlpha),
                                     accentColor = accentColor,
-                                    onToggleFavorito = { onToggleFavorito(post) },
+                                    onToggleFavorito = { onToggleFavorito(it) },
                                     onDelete = {
-                                        onDeletePost(post)
-                                        pendingDeleted = post
+                                        onDeletePost(it)
+                                        pendingDeleted = it
                                     },
-                                    onEditNotes = { editNotesPost = post },
-                                    onEditCategories = { editCategoriesPost = post },
+                                    onEditNotes = { editNotesPost = it },
+                                    onEditCategories = { editCategoriesPost = it },
                                     onCopyUrl = { pendingCopiedUrl = it },
-                                    onRetryExtraction = { onRetryExtraction(post) },
-                                    onOpen = { onOpenPost(post.id) }
+                                    onRetryExtraction = { onRetryExtraction(it) },
+                                    onOpen = { onOpenPost(it.id) }
                                 )
                             }
                         }
@@ -703,19 +704,19 @@ private fun FilterCategoryChip(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun PostCard(
-    post: PostEntity,
+private fun PostGroupCard(
+    postGroup: List<PostEntity>,
     modifier: Modifier = Modifier,
     accentColor: androidx.compose.ui.graphics.Color? = null,
-    onToggleFavorito: () -> Unit,
-    onDelete: () -> Unit,
-    onEditNotes: () -> Unit,
-    onEditCategories: () -> Unit,
+    onToggleFavorito: (PostEntity) -> Unit,
+    onDelete: (PostEntity) -> Unit,
+    onEditNotes: (PostEntity) -> Unit,
+    onEditCategories: (PostEntity) -> Unit,
     onCopyUrl: (String) -> Unit,
-    onRetryExtraction: () -> Unit,
-    onOpen: () -> Unit
+    onRetryExtraction: (PostEntity) -> Unit,
+    onOpen: (PostEntity) -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     var favPressed by remember { mutableStateOf(false) }
@@ -731,6 +732,9 @@ private fun PostCard(
         label = "fav_scale"
     )
 
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { postGroup.size })
+    val currentPost = postGroup[pagerState.currentPage]
+
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -740,13 +744,15 @@ private fun PostCard(
                     stiffness = Spring.StiffnessMediumLow
                 )
             )
-            .clickable(onClick = onOpen),
+            .clickable { onOpen(currentPost) },
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         shape = MaterialTheme.shapes.large
     ) {
-        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+        androidx.compose.foundation.pager.HorizontalPager(state = pagerState) { page ->
+            val post = postGroup[page]
+            Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             if (accentColor != null) {
                 Box(
                     modifier = Modifier
@@ -759,13 +765,12 @@ private fun PostCard(
             modifier = Modifier.weight(1f).padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Header: Avatar + Author + Date
+            // Header: Avatar + Author + Date + Post Counter
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Avatar circular con inicial
-                val initial = post.autor.removePrefix("@").firstOrNull()?.uppercase() ?: "?"
+                // Avatar circular con imagen real o inicial
                 Box(
                     modifier = Modifier
                         .size(36.dp)
@@ -773,12 +778,22 @@ private fun PostCard(
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = initial,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    if (post.authorAvatarUrl != null) {
+                        coil.compose.AsyncImage(
+                            model = post.authorAvatarUrl,
+                            contentDescription = "Avatar de ${post.autor}",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        )
+                    } else {
+                        val initial = post.autor.removePrefix("@").firstOrNull()?.uppercase() ?: "?"
+                        Text(
+                            text = initial,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -795,6 +810,23 @@ private fun PostCard(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+                
+                // Indicador de Pager si hay más de 1 post en el grupo
+                if (postGroup.size > 1) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Text(
+                            text = "${page + 1}/${postGroup.size}",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
             }
 
@@ -934,7 +966,7 @@ private fun PostCard(
                     .firstOrNull { it.isNotBlank() }
                     .orEmpty()
                 AssistChip(
-                    onClick = onEditNotes,
+                    onClick = { onEditNotes(post) },
                     leadingIcon = {
                         Text(
                             text = "\uD83D\uDCDD",
@@ -971,7 +1003,7 @@ private fun PostCard(
                 IconButton(
                     onClick = {
                         favPressed = true
-                        onToggleFavorito()
+                        onToggleFavorito(post)
                     },
                     modifier = Modifier.graphicsLayer(
                         scaleX = favScale,
@@ -1003,7 +1035,7 @@ private fun PostCard(
                             text = { Text(text = stringResource(id = R.string.edit_notes_action)) },
                             onClick = {
                                 menuExpanded = false
-                                onEditNotes()
+                                onEditNotes(post)
                             }
                         )
                         DropdownMenuItem(
@@ -1013,7 +1045,7 @@ private fun PostCard(
                             text = { Text(text = stringResource(id = R.string.assign_categories_action)) },
                             onClick = {
                                 menuExpanded = false
-                                onEditCategories()
+                                onEditCategories(post)
                             }
                         )
                         DropdownMenuItem(
@@ -1035,7 +1067,7 @@ private fun PostCard(
                                 text = { Text(text = stringResource(id = R.string.retry_extraction_action)) },
                                 onClick = {
                                     menuExpanded = false
-                                    onRetryExtraction()
+                                    onRetryExtraction(post)
                                 }
                             )
                         }
@@ -1055,7 +1087,7 @@ private fun PostCard(
                             },
                             onClick = {
                                 menuExpanded = false
-                                onDelete()
+                                onDelete(post)
                             }
                         )
                     }
@@ -1063,6 +1095,7 @@ private fun PostCard(
             }
         }
         } // closes Row (accent strip + content)
+        } // closes HorizontalPager
     }
 }
 

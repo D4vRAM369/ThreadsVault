@@ -22,6 +22,8 @@ class PostRepository(
     suspend fun insertar(post: PostEntity): Long = postDao.insertar(post)
 
     suspend fun obtenerPorId(id: Long): PostEntity? = postDao.obtenerPorId(id)
+    suspend fun obtenerPorThreadGroupId(threadGroupId: String): List<PostEntity> =
+        postDao.obtenerPorThreadGroupId(threadGroupId)
 
     suspend fun actualizar(post: PostEntity) = postDao.actualizar(post)
 

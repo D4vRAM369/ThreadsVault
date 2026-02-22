@@ -33,9 +33,11 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
@@ -72,7 +74,9 @@ import com.d4vram.threadsvault.utils.MediaUrlUtils
 @Composable
 fun PostDetailScreen(
     uiState: PostDetailUiState,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onPreviousInThread: () -> Unit = {},
+    onNextInThread: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -147,6 +151,7 @@ fun PostDetailScreen(
                     MediaUrlsCodec.mergeWithPrimary(uiState.post.mediaUrls, uiState.post.imagenPath)
                 }
                 var viewerUrl by remember(mediaUrls) { mutableStateOf<String?>(null) }
+                val hasThreadNavigation = uiState.threadPosts.size > 1
 
                 Column(
                     modifier = Modifier
@@ -178,6 +183,50 @@ fun PostDetailScreen(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+                    }
+
+                    if (hasThreadNavigation) {
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(
+                                        id = R.string.thread_post_position_label,
+                                        uiState.currentThreadIndex + 1,
+                                        uiState.threadPosts.size
+                                    ),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    OutlinedButton(
+                                        onClick = onPreviousInThread,
+                                        enabled = uiState.currentThreadIndex > 0,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(text = stringResource(id = R.string.previous_post_action))
+                                    }
+                                    FilledTonalButton(
+                                        onClick = onNextInThread,
+                                        enabled = uiState.currentThreadIndex < uiState.threadPosts.lastIndex,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(text = stringResource(id = R.string.next_post_action))
+                                    }
+                                }
+                            }
                         }
                     }
 
