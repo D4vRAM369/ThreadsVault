@@ -35,8 +35,15 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -114,7 +121,9 @@ import coil.compose.AsyncImage
 import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.database.entity.PostEntity
+import com.d4vram.threadsvault.ui.components.CategoryColorPickerDialog
 import com.d4vram.threadsvault.ui.components.LinkifiedText
+import com.d4vram.threadsvault.ui.components.parseHexColor
 import com.d4vram.threadsvault.ui.theme.VaultFavorite
 import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.MediaUrlUtils
@@ -137,13 +146,19 @@ fun VaultScreen(
     onEditNotes: (PostEntity, String) -> Unit,
     onEditCategories: (PostEntity, List<String>) -> Unit,
     onRetryExtraction: (PostEntity) -> Unit,
-    onAddCategory: (String, String) -> Unit,
+    onAddCategory: (String, String, String) -> Unit,
     onDeleteCategory: (CategoryEntity) -> Unit,
     onOpenPost: (Long) -> Unit,
     onSearchAction: () -> Unit,
     onOpenSettings: () -> Unit,
     onManualAdd: () -> Unit,
-    postCountsByCategory: Map<String, Int> = emptyMap()
+    postCountsByCategory: Map<String, Int> = emptyMap(),
+    isSelectionMode: Boolean = false,
+    selectedGroupKeys: Set<Long> = emptySet(),
+    onLongPressCard: (Long) -> Unit = {},
+    onToggleSeleccion: (Long) -> Unit = {},
+    onAgrupar: () -> Unit = {},
+    onSalirSeleccion: () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingDeleted by remember { mutableStateOf<PostEntity?>(null) }
@@ -163,6 +178,8 @@ fun VaultScreen(
         is VaultUiState.Success -> extractTopHashtags(uiState.postGroups.flatten())
         else -> emptyList()
     }
+
+    BackHandler(enabled = isSelectionMode) { onSalirSeleccion() }
 
     LaunchedEffect(pendingDeleted) {
         val deleted = pendingDeleted ?: return@LaunchedEffect
@@ -230,18 +247,68 @@ fun VaultScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onManualAdd,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                text = { Text(text = stringResource(id = R.string.manual_add_placeholder)) },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(id = R.string.manual_add_placeholder)
-                    )
+            AnimatedVisibility(
+                visible = !isSelectionMode,
+                enter = fadeIn() + slideInVertically { it },
+                exit = fadeOut() + slideOutVertically { it }
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = onManualAdd,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    text = { Text(text = stringResource(id = R.string.manual_add_placeholder)) },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = stringResource(id = R.string.manual_add_placeholder)
+                        )
+                    }
+                )
+            }
+        },
+        bottomBar = {
+            AnimatedVisibility(
+                visible = isSelectionMode,
+                enter = fadeIn() + slideInVertically { it },
+                exit = fadeOut() + slideOutVertically { it }
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    tonalElevation = 4.dp,
+                    shadowElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            IconButton(onClick = onSalirSeleccion) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = stringResource(id = R.string.exit_selection_mode)
+                                )
+                            }
+                            Text(
+                                text = stringResource(id = R.string.selection_count_label, selectedGroupKeys.size),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Button(
+                            onClick = onAgrupar,
+                            enabled = selectedGroupKeys.size >= 2
+                        ) {
+                            Text(text = stringResource(id = R.string.group_as_thread_action))
+                        }
+                    }
                 }
-            )
+            }
         }
     ) { padding ->
         Column(
@@ -489,6 +556,10 @@ fun VaultScreen(
                                     postGroup = postGroup,
                                     modifier = Modifier.animateItemPlacement().alpha(cardAlpha),
                                     accentColor = accentColor,
+                                    isSelectionMode = isSelectionMode,
+                                    isSelected = firstPost.id in selectedGroupKeys,
+                                    onLongPress = { onLongPressCard(firstPost.id) },
+                                    onToggleSeleccion = { onToggleSeleccion(firstPost.id) },
                                     onToggleFavorito = { onToggleFavorito(it) },
                                     onDelete = {
                                         onDeletePost(it)
@@ -534,8 +605,8 @@ fun VaultScreen(
     if (showAddCategoryDialog) {
         AddCategoryDialog(
             onDismiss = { showAddCategoryDialog = false },
-            onAdd = { name, emoji ->
-                onAddCategory(name, emoji)
+            onAdd = { name, emoji, color ->
+                onAddCategory(name, emoji, color)
                 showAddCategoryDialog = false
             }
         )
@@ -709,6 +780,10 @@ private fun PostGroupCard(
     postGroup: List<PostEntity>,
     modifier: Modifier = Modifier,
     accentColor: androidx.compose.ui.graphics.Color? = null,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongPress: () -> Unit = {},
+    onToggleSeleccion: () -> Unit = {},
     onToggleFavorito: (PostEntity) -> Unit,
     onDelete: (PostEntity) -> Unit,
     onEditNotes: (PostEntity) -> Unit,
@@ -733,6 +808,8 @@ private fun PostGroupCard(
 
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { postGroup.size })
     val currentPost = postGroup[pagerState.currentPage]
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val cardShape = MaterialTheme.shapes.large
 
     ElevatedCard(
         modifier = modifier
@@ -743,7 +820,11 @@ private fun PostGroupCard(
                     stiffness = Spring.StiffnessMediumLow
                 )
             )
-            .clickable { onOpen(currentPost) }
+            .then(if (isSelected) Modifier.border(2.dp, primaryColor, cardShape) else Modifier)
+            .combinedClickable(
+                onClick = { if (isSelectionMode) onToggleSeleccion() else onOpen(currentPost) },
+                onLongClick = { if (!isSelectionMode) onLongPress() }
+            )
             .then(
                 if (accentColor != null)
                     Modifier.drawBehind {
@@ -757,8 +838,9 @@ private fun PostGroupCard(
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = MaterialTheme.shapes.large
+        shape = cardShape
     ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
         androidx.compose.foundation.pager.HorizontalPager(state = pagerState) { page ->
             val post = postGroup[page]
         Column(
@@ -781,15 +863,17 @@ private fun PostGroupCard(
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (post.authorAvatarUrl != null) {
+                    val initial = post.autor.removePrefix("@").firstOrNull()?.uppercase() ?: "?"
+                    var avatarError by remember(post.authorAvatarUrl) { mutableStateOf(false) }
+                    if (post.authorAvatarUrl != null && !avatarError) {
                         coil.compose.AsyncImage(
                             model = post.authorAvatarUrl,
                             contentDescription = "Avatar de ${post.autor}",
                             modifier = Modifier.fillMaxSize(),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            onError = { avatarError = true }
                         )
                     } else {
-                        val initial = post.autor.removePrefix("@").firstOrNull()?.uppercase() ?: "?"
                         Text(
                             text = initial,
                             style = MaterialTheme.typography.titleSmall,
@@ -1062,18 +1146,16 @@ private fun PostGroupCard(
                                 onCopyUrl(post.url)
                             }
                         )
-                        if (extractionNeedsRetry) {
-                            DropdownMenuItem(
-                                leadingIcon = {
-                                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
-                                },
-                                text = { Text(text = stringResource(id = R.string.retry_extraction_action)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    onRetryExtraction(post)
-                                }
-                            )
-                        }
+                        DropdownMenuItem(
+                            leadingIcon = {
+                                Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                            },
+                            text = { Text(text = stringResource(id = R.string.retry_extraction_action)) },
+                            onClick = {
+                                menuExpanded = false
+                                onRetryExtraction(post)
+                            }
+                        )
                         DropdownMenuItem(
                             leadingIcon = {
                                 Icon(
@@ -1098,6 +1180,24 @@ private fun PostGroupCard(
             }
         }
         } // closes HorizontalPager
+        if (isSelected) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 10.dp, end = 10.dp)
+                    .size(24.dp),
+                shape = CircleShape,
+                color = primaryColor
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.padding(4.dp)
+                )
+            }
+        }
+        } // closes Box
     }
 }
 
@@ -1187,10 +1287,12 @@ private fun EditNotesDialog(
 @Composable
 private fun AddCategoryDialog(
     onDismiss: () -> Unit,
-    onAdd: (String, String) -> Unit
+    onAdd: (String, String, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var icon by remember { mutableStateOf("") }
+    var color by remember { mutableStateOf("#6D44E5") }
+    var showColorPicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1222,10 +1324,19 @@ private fun AddCategoryDialog(
                     shape = MaterialTheme.shapes.medium,
                     singleLine = true
                 )
+                IconButton(onClick = { showColorPicker = true }) {
+                    Surface(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clip(CircleShape),
+                        color = parseHexColor(color),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {}
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onAdd(name, icon) }) {
+            TextButton(onClick = { onAdd(name, icon, color) }) {
                 Text(text = stringResource(id = R.string.save_action))
             }
         },
@@ -1235,6 +1346,17 @@ private fun AddCategoryDialog(
             }
         }
     )
+
+    if (showColorPicker) {
+        CategoryColorPickerDialog(
+            initialHex = color,
+            onDismiss = { showColorPicker = false },
+            onConfirm = { selectedHex ->
+                color = selectedHex
+                showColorPicker = false
+            }
+        )
+    }
 }
 
 private fun formatRelativeDate(timestamp: Long): String {

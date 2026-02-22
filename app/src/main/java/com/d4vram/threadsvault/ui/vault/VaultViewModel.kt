@@ -51,6 +51,12 @@ class VaultViewModel(context: Context) : ViewModel() {
     private val _messageEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val messageEvents: SharedFlow<String> = _messageEvents
 
+    private val _isSelectionMode = MutableStateFlow(false)
+    val isSelectionMode: StateFlow<Boolean> = _isSelectionMode
+
+    private val _selectedGroupKeys = MutableStateFlow<Set<Long>>(emptySet())
+    val selectedGroupKeys: StateFlow<Set<Long>> = _selectedGroupKeys
+
     val categories: StateFlow<List<CategoryEntity>> = combine(
         db.categoryDao().obtenerTodas(),
         preferences.categoryOrderFlow
@@ -116,13 +122,14 @@ class VaultViewModel(context: Context) : ViewModel() {
         _showFavoritesOnly.value = !_showFavoritesOnly.value
     }
 
-    fun addCategory(nombre: String, emoji: String) {
-        val parsed = CategoryInputParser.parse(nombre, emoji) ?: return
+    fun addCategory(nombre: String, emoji: String, color: String = "#6200EE") {
+        val parsed = CategoryInputParser.parse(nombre, emoji, color) ?: return
         viewModelScope.launch {
             val id = db.categoryDao().insertar(
                 CategoryEntity(
                     nombre = parsed.nombre,
-                    emoji = parsed.emoji
+                    emoji = parsed.emoji,
+                    color = parsed.color
                 )
             )
             if (id > 0L) {
@@ -202,6 +209,39 @@ class VaultViewModel(context: Context) : ViewModel() {
             runCatching {
                 repository.actualizar(post.copy(categorias = csv))
             }
+        }
+    }
+
+    fun activarModoSeleccion(groupKey: Long) {
+        _selectedGroupKeys.value = setOf(groupKey)
+        _isSelectionMode.value = true
+    }
+
+    fun toggleSeleccion(groupKey: Long) {
+        val current = _selectedGroupKeys.value
+        _selectedGroupKeys.value = if (current.contains(groupKey)) current - groupKey else current + groupKey
+        if (_selectedGroupKeys.value.isEmpty()) _isSelectionMode.value = false
+    }
+
+    fun salirModoSeleccion() {
+        _isSelectionMode.value = false
+        _selectedGroupKeys.value = emptySet()
+    }
+
+    fun agruparSeleccionados() {
+        val currentState = uiState.value
+        if (currentState !is VaultUiState.Success) return
+        val keys = _selectedGroupKeys.value
+        if (keys.size < 2) return
+        viewModelScope.launch {
+            val selectedGroups = currentState.postGroups.filter { group -> group.first().id in keys }
+            val allPosts = selectedGroups.flatten().sortedBy { it.fechaGuardado }
+            val newGroupId = ThreadsThreadParser.buildThreadGroupId(allPosts.map { it.url })
+            allPosts.forEachIndexed { index, post ->
+                repository.actualizarThreadGroup(post.id, newGroupId, index)
+            }
+            _messageEvents.tryEmit(appContext.getString(R.string.thread_grouped_message))
+            salirModoSeleccion()
         }
     }
 

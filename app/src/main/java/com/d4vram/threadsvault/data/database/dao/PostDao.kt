@@ -62,6 +62,9 @@ interface PostDao {
     @Update
     suspend fun actualizar(post: PostEntity)
 
+    @Query("UPDATE posts SET threadGroupId = :groupId, threadPosition = :position WHERE id = :postId")
+    suspend fun actualizarThreadGroup(postId: Long, groupId: String, position: Int)
+
     // ── Borrar ─────────────────────────────────────────
     @Delete
     suspend fun borrar(post: PostEntity)

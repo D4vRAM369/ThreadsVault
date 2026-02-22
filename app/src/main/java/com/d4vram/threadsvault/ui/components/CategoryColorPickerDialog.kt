@@ -47,9 +47,9 @@ fun CategoryColorPickerDialog(
 
 fun parseHexColor(hex: String): Color = runCatching {
     Color(android.graphics.Color.parseColor(normalizeHex(hex)))
-}.getOrDefault(Color(0xFF6200EE))
+}.getOrDefault(Color(0xFF6D44E5))
 
 private fun normalizeHex(value: String): String {
     val clean = value.trim().uppercase(Locale.ROOT)
-    return if (Regex("^#[0-9A-F]{6}$").matches(clean)) clean else "#6200EE"
+    return if (Regex("^#[0-9A-F]{6}$").matches(clean)) clean else "#6D44E5"
 }

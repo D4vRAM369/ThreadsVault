@@ -103,7 +103,7 @@ fun SettingsScreen(
 ) {
     var newCategory by remember { mutableStateOf("") }
     var newCategoryEmoji by remember { mutableStateOf("") }
-    var newCategoryColor by remember { mutableStateOf("#6200EE") }
+    var newCategoryColor by remember { mutableStateOf("#6D44E5") }
     var showNewCategoryColorDialog by remember { mutableStateOf(false) }
     var showRestoreConfirm by remember { mutableStateOf(false) }
     var pendingCategoryDelete by remember { mutableStateOf<CategoryEntity?>(null) }
@@ -241,7 +241,7 @@ fun SettingsScreen(
                             onAddCategory(newCategory, newCategoryEmoji, newCategoryColor)
                             newCategory = ""
                             newCategoryEmoji = ""
-                            newCategoryColor = "#6200EE"
+                            newCategoryColor = "#6D44E5"
                         }
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))

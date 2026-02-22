@@ -59,6 +59,8 @@ class MainActivity : ComponentActivity() {
             val selectedCategory by vaultViewModel.currentCategory.collectAsState()
             val showFavoritesOnly by vaultViewModel.showFavoritesOnly.collectAsState()
             val postCountsByCategory by vaultViewModel.postCountsByCategory.collectAsState()
+            val isSelectionMode by vaultViewModel.isSelectionMode.collectAsState()
+            val selectedGroupKeys by vaultViewModel.selectedGroupKeys.collectAsState()
             val themeMode by settingsViewModel.themeMode.collectAsState()
             val settingsCategories by settingsViewModel.categories.collectAsState()
             val autoBackupFolderUri by settingsViewModel.autoBackupFolderUri.collectAsState()
@@ -168,7 +170,13 @@ class MainActivity : ComponentActivity() {
                             onSearchAction = {},
                             onOpenSettings = { navController.navigate(AppRoute.SETTINGS) },
                             onManualAdd = { showManualAdd = true },
-                            postCountsByCategory = postCountsByCategory
+                            postCountsByCategory = postCountsByCategory,
+                            isSelectionMode = isSelectionMode,
+                            selectedGroupKeys = selectedGroupKeys,
+                            onLongPressCard = vaultViewModel::activarModoSeleccion,
+                            onToggleSeleccion = vaultViewModel::toggleSeleccion,
+                            onAgrupar = vaultViewModel::agruparSeleccionados,
+                            onSalirSeleccion = vaultViewModel::salirModoSeleccion
                         )
                     }
                     composable(
@@ -180,11 +188,14 @@ class MainActivity : ComponentActivity() {
                             PostDetailViewModel(applicationContext, postId)
                         }
                         val detailUiState by detailViewModel.uiState.collectAsState()
+                        val detailIsRefreshing by detailViewModel.isRefreshing.collectAsState()
                         PostDetailScreen(
                             uiState = detailUiState,
+                            isRefreshing = detailIsRefreshing,
                             onBack = { navController.popBackStack() },
                             onPreviousInThread = detailViewModel::irAlAnteriorEnHilo,
-                            onNextInThread = detailViewModel::irAlSiguienteEnHilo
+                            onNextInThread = detailViewModel::irAlSiguienteEnHilo,
+                            onRetryExtraction = detailViewModel::reextraerContenido
                         )
                     }
                     composable(AppRoute.SETTINGS) {

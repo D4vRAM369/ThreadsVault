@@ -27,6 +27,9 @@ class PostRepository(
 
     suspend fun actualizar(post: PostEntity) = postDao.actualizar(post)
 
+    suspend fun actualizarThreadGroup(postId: Long, groupId: String, position: Int) =
+        postDao.actualizarThreadGroup(postId, groupId, position)
+
     suspend fun borrar(post: PostEntity) = postDao.borrar(post)
 
     suspend fun contarTodos(): Int = postDao.contarTodos()

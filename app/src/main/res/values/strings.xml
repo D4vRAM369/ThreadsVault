@@ -101,4 +101,8 @@
     <string name="manual_add_saved_message">Post guardado en ThreadsVault</string>
     <string name="save_cancelled_message">Guardado cancelado.</string>
     <string name="folder_selection_cancelled_message">Seleccion de carpeta cancelada.</string>
+    <string name="selection_count_label">%1$d seleccionados</string>
+    <string name="group_as_thread_action">Agrupar como hilo</string>
+    <string name="exit_selection_mode">Salir de seleccion</string>
+    <string name="thread_grouped_message">Posts agrupados como hilo</string>
 </resources>

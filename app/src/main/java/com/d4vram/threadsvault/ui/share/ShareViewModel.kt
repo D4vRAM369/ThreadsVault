@@ -89,6 +89,7 @@ class ShareViewModel(context: Context) : ViewModel() {
                             contenido = preview.content,
                             imagenPath = preview.mediaUrl,
                             mediaUrls = MediaUrlsCodec.encode(preview.mediaUrls),
+                            authorAvatarUrl = preview.authorAvatarUrl,
                             notas = if (index == 0) notas.trim() else "",
                             categorias = categoria.orEmpty(),
                             threadGroupId = threadGroupId,

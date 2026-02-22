@@ -5,11 +5,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +30,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,13 +72,15 @@ import com.d4vram.threadsvault.utils.MediaUrlsCodec
 import com.d4vram.threadsvault.utils.MediaSaveUtils
 import com.d4vram.threadsvault.utils.MediaUrlUtils
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun PostDetailScreen(
     uiState: PostDetailUiState,
+    isRefreshing: Boolean = false,
     onBack: () -> Unit = {},
     onPreviousInThread: () -> Unit = {},
-    onNextInThread: () -> Unit = {}
+    onNextInThread: () -> Unit = {},
+    onRetryExtraction: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -98,6 +102,24 @@ fun PostDetailScreen(
                             contentDescription = stringResource(id = R.string.back_action),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                },
+                actions = {
+                    if (uiState is PostDetailUiState.Success) {
+                        IconButton(onClick = onRetryExtraction, enabled = !isRefreshing) {
+                            if (isRefreshing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = stringResource(id = R.string.retry_extraction_action),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             )
@@ -150,6 +172,7 @@ fun PostDetailScreen(
                 val mediaUrls = remember(uiState.post.mediaUrls, uiState.post.imagenPath) {
                     MediaUrlsCodec.mergeWithPrimary(uiState.post.mediaUrls, uiState.post.imagenPath)
                 }
+                val mediaPagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { mediaUrls.size })
                 var viewerUrl by remember(mediaUrls) { mutableStateOf<String?>(null) }
                 val hasThreadNavigation = uiState.threadPosts.size > 1
 
@@ -161,28 +184,60 @@ fun PostDetailScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Author header + date
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = uiState.post.autor.ifBlank { "@unknown" },
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    // Author header + avatar + date
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Avatar circular
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
                         ) {
+                            val initial = uiState.post.autor.removePrefix("@").firstOrNull()?.uppercase() ?: "?"
+                            var avatarError by remember(uiState.post.authorAvatarUrl) { mutableStateOf(false) }
+                            if (uiState.post.authorAvatarUrl != null && !avatarError) {
+                                AsyncImage(
+                                    model = uiState.post.authorAvatarUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
+                                    onError = { avatarError = true }
+                                )
+                            } else {
+                                Text(
+                                    text = initial,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
-                                text = stringResource(id = R.string.saved_on_label),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = uiState.post.autor.ifBlank { "@unknown" },
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
                             )
-                            Text(
-                                text = formatRelativeDate(uiState.post.fechaGuardado),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.saved_on_label),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = formatRelativeDate(uiState.post.fechaGuardado),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
 
@@ -286,14 +341,19 @@ fun PostDetailScreen(
                         )
                     }
 
-                    // Media
+                    // Media carousel
                     if (mediaUrls.isNotEmpty()) {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            items(mediaUrls, key = { it }) { mediaUrl ->
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            androidx.compose.foundation.pager.HorizontalPager(
+                                state = mediaPagerState,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { page ->
+                                val mediaUrl = mediaUrls[page]
                                 Box(
                                     modifier = Modifier
-                                        .width(260.dp)
-                                        .heightIn(min = 140.dp, max = 420.dp)
+                                        .fillMaxWidth()
+                                        .heightIn(min = 200.dp, max = 500.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     AsyncImage(
                                         model = mediaUrl,
@@ -301,7 +361,7 @@ fun PostDetailScreen(
                                         contentScale = ContentScale.Fit,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .heightIn(min = 140.dp, max = 420.dp)
+                                            .heightIn(min = 200.dp, max = 500.dp)
                                             .clip(MaterialTheme.shapes.medium)
                                             .clickable { viewerUrl = mediaUrl }
                                     )
@@ -309,9 +369,9 @@ fun PostDetailScreen(
                                         Surface(
                                             modifier = Modifier
                                                 .align(Alignment.Center)
-                                                .size(42.dp),
+                                                .size(52.dp),
                                             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
-                                            shape = androidx.compose.foundation.shape.CircleShape
+                                            shape = CircleShape
                                         ) {
                                             Box(
                                                 modifier = Modifier.fillMaxSize(),
@@ -325,6 +385,23 @@ fun PostDetailScreen(
                                             }
                                         }
                                     }
+                                }
+                            }
+                            if (mediaUrls.size > 1) {
+                                Surface(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(8.dp),
+                                    shape = MaterialTheme.shapes.small,
+                                    color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f)
+                                ) {
+                                    Text(
+                                        text = "${mediaPagerState.currentPage + 1}/${mediaUrls.size}",
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = androidx.compose.ui.graphics.Color.White
+                                    )
                                 }
                             }
                         }
