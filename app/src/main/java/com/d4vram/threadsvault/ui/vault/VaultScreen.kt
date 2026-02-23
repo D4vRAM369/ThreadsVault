@@ -158,7 +158,9 @@ fun VaultScreen(
     onLongPressCard: (Long) -> Unit = {},
     onToggleSeleccion: (Long) -> Unit = {},
     onAgrupar: () -> Unit = {},
-    onSalirSeleccion: () -> Unit = {}
+    onSalirSeleccion: () -> Unit = {},
+    hashtagFilter: String? = null,
+    onHashtagClick: (String?) -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingDeleted by remember { mutableStateOf<PostEntity?>(null) }
@@ -375,19 +377,25 @@ fun VaultScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             items(topHashtags, key = { it }) { tag ->
+                                val isActiveFilter = hashtagFilter == tag
                                 Surface(
+                                    onClick = { onHashtagClick(if (isActiveFilter) null else tag) },
                                     shape = RoundedCornerShape(999.dp),
-                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    color = if (isActiveFilter) MaterialTheme.colorScheme.secondary
+                                            else MaterialTheme.colorScheme.secondaryContainer,
                                     border = BorderStroke(
                                         1.dp,
-                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.32f)
+                                        MaterialTheme.colorScheme.secondary.copy(
+                                            alpha = if (isActiveFilter) 1f else 0.32f
+                                        )
                                     )
                                 ) {
                                     Text(
                                         text = "#$tag",
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        color = if (isActiveFilter) MaterialTheme.colorScheme.onSecondary
+                                                else MaterialTheme.colorScheme.onSecondaryContainer,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                 }
@@ -481,7 +489,8 @@ fun VaultScreen(
                                             ) {
                                                 pendingCategoryDelete = category
                                             }
-                                        }
+                                        },
+                                        accentColor = runCatching { parseHexColor(category.color) }.getOrNull()
                                     )
                                 }
                                 item {
@@ -508,8 +517,13 @@ fun VaultScreen(
                         ShimmerPostCardList()
                     }
                     is VaultUiState.Empty -> {
+                        val emptyAccent = selectedCategory?.let { catName ->
+                            categories.find { it.nombre == catName }
+                                ?.color?.let { runCatching { parseHexColor(it) }.getOrNull() }
+                        }
                         EmptyVaultState(
-                            modifier = Modifier.padding(bottom = 104.dp)
+                            modifier = Modifier.padding(bottom = 104.dp),
+                            accentColor = emptyAccent
                         )
                     }
                     is VaultUiState.Error -> {
@@ -560,6 +574,7 @@ fun VaultScreen(
                                     isSelected = firstPost.id in selectedGroupKeys,
                                     onLongPress = { onLongPressCard(firstPost.id) },
                                     onToggleSeleccion = { onToggleSeleccion(firstPost.id) },
+                                    onHashtagClick = { tag -> onHashtagClick(tag) },
                                     onToggleFavorito = { onToggleFavorito(it) },
                                     onDelete = {
                                         onDeletePost(it)
@@ -643,8 +658,12 @@ fun VaultScreen(
 
 @Composable
 private fun EmptyVaultState(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    accentColor: androidx.compose.ui.graphics.Color? = null
 ) {
+    val container = accentColor ?: MaterialTheme.colorScheme.primaryContainer
+    val iconTint = accentColor ?: MaterialTheme.colorScheme.primary
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -655,7 +674,10 @@ private fun EmptyVaultState(
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+            border = BorderStroke(
+                1.dp,
+                (accentColor ?: MaterialTheme.colorScheme.outlineVariant).copy(alpha = 0.45f)
+            )
         ) {
             Box(
                 modifier = Modifier
@@ -663,7 +685,7 @@ private fun EmptyVaultState(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.24f),
+                                container.copy(alpha = 0.22f),
                                 MaterialTheme.colorScheme.surface
                             )
                         )
@@ -676,19 +698,19 @@ private fun EmptyVaultState(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(999.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                        color = container.copy(alpha = 0.18f)
                     ) {
                         Text(
                             text = "Start your private vault",
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = iconTint.copy(alpha = if (accentColor != null) 1f else 0.85f),
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                     Surface(
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                        color = container.copy(alpha = 0.18f)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Inventory2,
@@ -696,7 +718,7 @@ private fun EmptyVaultState(
                             modifier = Modifier
                                 .padding(16.dp)
                                 .size(72.dp),
-                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
+                            tint = iconTint.copy(alpha = 0.72f)
                         )
                     }
                     Text(
@@ -732,21 +754,38 @@ private fun FilterCategoryChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    accentColor: androidx.compose.ui.graphics.Color? = null
 ) {
     val bgColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+        targetValue = when {
+            selected && accentColor != null -> accentColor
+            selected -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.surfaceVariant
+        },
         animationSpec = tween(durationMillis = 200),
         label = "chip_bg"
     )
     val textColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = when {
+            selected && accentColor != null -> {
+                val lum = 0.299f * accentColor.red + 0.587f * accentColor.green + 0.114f * accentColor.blue
+                if (lum > 0.55f) androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.87f)
+                else androidx.compose.ui.graphics.Color.White
+            }
+            selected -> MaterialTheme.colorScheme.onPrimary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
         animationSpec = tween(durationMillis = 200),
         label = "chip_text"
     )
     val borderColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
+        targetValue = when {
+            selected && accentColor != null -> accentColor
+            selected -> MaterialTheme.colorScheme.primary
+            accentColor != null -> accentColor.copy(alpha = 0.45f)
+            else -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+        },
         animationSpec = tween(durationMillis = 200),
         label = "chip_border"
     )
@@ -784,6 +823,7 @@ private fun PostGroupCard(
     isSelected: Boolean = false,
     onLongPress: () -> Unit = {},
     onToggleSeleccion: () -> Unit = {},
+    onHashtagClick: (String) -> Unit = {},
     onToggleFavorito: (PostEntity) -> Unit,
     onDelete: (PostEntity) -> Unit,
     onEditNotes: (PostEntity) -> Unit,
@@ -824,8 +864,14 @@ private fun PostGroupCard(
             .combinedClickable(
                 onClick = { if (isSelectionMode) onToggleSeleccion() else onOpen(currentPost) },
                 onLongClick = { if (!isSelectionMode) onLongPress() }
-            )
-            .then(
+            ),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = cardShape
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth().then(
                 if (accentColor != null)
                     Modifier.drawBehind {
                         drawRect(
@@ -834,13 +880,8 @@ private fun PostGroupCard(
                         )
                     }
                 else Modifier
-            ),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        shape = cardShape
-    ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+            )
+        ) {
         androidx.compose.foundation.pager.HorizontalPager(state = pagerState) { page ->
             val post = postGroup[page]
         Column(
@@ -929,7 +970,8 @@ private fun PostGroupCard(
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.92f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.92f),
+                onHashtagClick = onHashtagClick
             )
 
             // URL pill (clickable hyperlink + copy)

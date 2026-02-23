@@ -57,6 +57,9 @@ class VaultViewModel(context: Context) : ViewModel() {
     private val _selectedGroupKeys = MutableStateFlow<Set<Long>>(emptySet())
     val selectedGroupKeys: StateFlow<Set<Long>> = _selectedGroupKeys
 
+    private val _hashtagFilter = MutableStateFlow<String?>(null)
+    val hashtagFilter: StateFlow<String?> = _hashtagFilter
+
     val categories: StateFlow<List<CategoryEntity>> = combine(
         db.categoryDao().obtenerTodas(),
         preferences.categoryOrderFlow
@@ -79,10 +82,14 @@ class VaultViewModel(context: Context) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     val uiState: StateFlow<VaultUiState> = combine(
-        searchText, selectedCategory, _showFavoritesOnly
-    ) { query, category, favOnly ->
-        Triple(query, category, favOnly)
-    }.flatMapLatest { (query, category, favOnly) ->
+        searchText, selectedCategory, _showFavoritesOnly, _hashtagFilter
+    ) { query, category, favOnly, hashtag ->
+        listOf(query, category, favOnly, hashtag)
+    }.flatMapLatest { values ->
+        val query = values[0] as String
+        val category = values[1] as String?
+        val favOnly = values[2] as Boolean
+        val hashtag = values[3] as String?
         val baseFlow = if (query.isBlank()) repository.obtenerTodos() else repository.buscar(query)
         baseFlow.map { posts ->
             var filtered = posts
@@ -94,6 +101,11 @@ class VaultViewModel(context: Context) : ViewModel() {
                     post.categorias.split(",")
                         .map { it.trim() }
                         .contains(category)
+                }
+            }
+            if (!hashtag.isNullOrBlank()) {
+                filtered = filtered.filter { post ->
+                    post.contenido.contains("#$hashtag", ignoreCase = true)
                 }
             }
             val grouped = filtered.groupBy { it.threadGroupId ?: it.id.toString() }
@@ -226,6 +238,10 @@ class VaultViewModel(context: Context) : ViewModel() {
     fun salirModoSeleccion() {
         _isSelectionMode.value = false
         _selectedGroupKeys.value = emptySet()
+    }
+
+    fun setHashtagFilter(tag: String?) {
+        _hashtagFilter.value = tag
     }
 
     fun agruparSeleccionados() {

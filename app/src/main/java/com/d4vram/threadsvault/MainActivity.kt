@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity() {
             val postCountsByCategory by vaultViewModel.postCountsByCategory.collectAsState()
             val isSelectionMode by vaultViewModel.isSelectionMode.collectAsState()
             val selectedGroupKeys by vaultViewModel.selectedGroupKeys.collectAsState()
+            val hashtagFilter by vaultViewModel.hashtagFilter.collectAsState()
             val themeMode by settingsViewModel.themeMode.collectAsState()
             val settingsCategories by settingsViewModel.categories.collectAsState()
             val autoBackupFolderUri by settingsViewModel.autoBackupFolderUri.collectAsState()
@@ -176,7 +177,9 @@ class MainActivity : ComponentActivity() {
                             onLongPressCard = vaultViewModel::activarModoSeleccion,
                             onToggleSeleccion = vaultViewModel::toggleSeleccion,
                             onAgrupar = vaultViewModel::agruparSeleccionados,
-                            onSalirSeleccion = vaultViewModel::salirModoSeleccion
+                            onSalirSeleccion = vaultViewModel::salirModoSeleccion,
+                            hashtagFilter = hashtagFilter,
+                            onHashtagClick = vaultViewModel::setHashtagFilter
                         )
                     }
                     composable(

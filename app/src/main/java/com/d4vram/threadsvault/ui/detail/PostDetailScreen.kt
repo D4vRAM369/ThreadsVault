@@ -335,6 +335,7 @@ fun PostDetailScreen(
                         LinkifiedText(
                             text = uiState.post.contenido.ifBlank { stringResource(id = R.string.no_content_text) },
                             style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(14.dp)
