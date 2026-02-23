@@ -11,22 +11,10 @@
 <img width="400" height="400" alt="ThreadsVault-icon" src="https://github.com/user-attachments/assets/1e871a24-469d-4d54-bb55-44b1f519ddf1" />
 
 <p align="left">
-  <a href="./README_spanish-version.md">Leer en espanol</a>
+  <a href="./README_spanish-version.md">Leer en español</a>
 </p>
 
 ThreadsVault is an Android app for saving, organizing, and keeping your favorite Threads posts easily accessible in a local vault.
-
-## Release v1.0.0
-
-This repository is ready for a public GitHub release (`v1.0.0`).
-
-- `README.md` documents installation, features, privacy, and build steps.
-- `CHANGELOG.md` contains the public release notes and a future `Unreleased` section.
-- Release build is configured with minification and resource shrinking enabled.
-
-### Download (GitHub Releases)
-
-Publish the generated APK/AAB under the GitHub Releases page and attach the `v1.0.0` notes from `CHANGELOG.md`.
 
 ## Why this app
 
@@ -41,14 +29,16 @@ For this reason, I decided to create an Android app with a vault where I can sen
 - Manual link add from inside the app.
 - Link preview extraction and content parsing.
 - Clickable hyperlinks inside saved post content.
+- Clickable #hashtags with instant filter chips.
 - OCR text extraction from post images.
 - Quick notes per saved item.
-- Categories with optional emoji.
+- Categories with emoji and color, with dynamic-contrast filter chips.
 - Favorites and search.
 - Export to CSV and PDF.
 - Backup and restore (JSON/CSV).
 - Auto-backup with SAF folder selection.
 - Light, dark, and system theme.
+- Built-in "How to use" tutorial.
 
 ## About the Dev
 
@@ -57,12 +47,6 @@ This project was built through **PBL (Project-Based Learning)**, using AI as a m
 
 <sub><em>"Not using AI to program nowadays is like being a farmer and refusing to use a tractor."</em></sub>
 
-## Sobre el Dev
-
-Este proyecto ha sido creado por **D4vRAM**, para y por la comunidad open source, con amor ❤️.
-Este proyecto ha sido creado mediante **PBL (Aprendizaje Basado en Proyectos)**, usando a la IA como mentora en un proceso de aprendizaje constante, como lo es con cada proyecto que realizo. Transformando ideas y soluciones a problemas en código.
-
-<sub><em>"No usar la IA para programar hoy en día es como ser agricultor y no querer usar el tractor."</em></sub>
 
 ## Privacy
 
@@ -92,6 +76,7 @@ Este proyecto ha sido creado mediante **PBL (Aprendizaje Basado en Proyectos)**,
 
 Requirements:
 
+- Android 8.0+ (API 26)
 - Android Studio (recent stable)
 - JDK 17
 - Android SDK 35
@@ -103,7 +88,7 @@ Commands:
 ./gradlew :app:assembleRelease
 ```
 
-Release artifact output (default local path after build):
+Release artifact output:
 
 - `app/build/outputs/apk/release/`
 
@@ -116,10 +101,15 @@ Release artifact output (default local path after build):
 ## Roadmap ideas
 
 - Convert it into a program or PWA available for use on Windows and Linux in the future.
-- FOSS OCR flavor for non-Google distributions.
+- FOSS OCR version for non-Google distributions (IzzyDroid requires it, and I would like to upload it there). It also fits with my ideology as a developer and will be beneficial for uploading the application to other open-source sites.
 - Better import/export UX.
 - More filtering and smart organization tools.
+- Maybe upload it to Google Play Store in the future.
 
 ## Author
 
-Created by [D4vRAM369](https://github.com/D4vRAM369)
+*Created by [D4vRAM369](https://github.com/D4vRAM369) during PBL sessions, using AI as a guide.*
+
+~
+
+***Not vibe-coding, just vibe and code!***
