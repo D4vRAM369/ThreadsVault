@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.filled.Palette
@@ -534,7 +535,7 @@ fun SettingsScreen(
                         },
                         trailingContent = {
                             Icon(
-                                imageVector = Icons.Default.ChevronRight,
+                                imageVector = Icons.Default.KeyboardArrowRight,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
