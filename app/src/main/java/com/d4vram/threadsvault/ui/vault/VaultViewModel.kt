@@ -104,8 +104,11 @@ class VaultViewModel(context: Context) : ViewModel() {
                 }
             }
             if (!hashtag.isNullOrBlank()) {
+                val lowerTag = hashtag.lowercase()
                 filtered = filtered.filter { post ->
-                    post.contenido.contains("#$hashtag", ignoreCase = true)
+                    post.contenido.contains("#$lowerTag", ignoreCase = true) ||
+                    post.notas.contains("#$lowerTag", ignoreCase = true) ||
+                    post.etiquetas.split(",").map { it.trim().lowercase() }.contains(lowerTag)
                 }
             }
             val grouped = filtered.groupBy { it.threadGroupId ?: it.id.toString() }
@@ -128,10 +131,12 @@ class VaultViewModel(context: Context) : ViewModel() {
 
     fun onCategorySelected(category: String?) {
         selectedCategory.value = category
+        _hashtagFilter.value = null
     }
 
     fun toggleFavoritesFilter() {
         _showFavoritesOnly.value = !_showFavoritesOnly.value
+        _hashtagFilter.value = null
     }
 
     fun addCategory(nombre: String, emoji: String, color: String = "#6200EE") {
