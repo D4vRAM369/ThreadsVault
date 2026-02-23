@@ -1,6 +1,7 @@
 package com.d4vram.threadsvault.ui.settings
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,10 +28,13 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ElevatedCard
@@ -73,6 +77,7 @@ import com.d4vram.threadsvault.R
 import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.preferences.ThemeMode
 import com.d4vram.threadsvault.ui.components.CategoryColorPickerDialog
+import com.d4vram.threadsvault.ui.components.HowToUseBottomSheet
 import com.d4vram.threadsvault.ui.components.parseHexColor
 import kotlinx.coroutines.launch
 
@@ -115,6 +120,7 @@ fun SettingsScreen(
     var dragOffset by remember { mutableStateOf(0f) }
     val categoryListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    var showHowToUse by remember { mutableStateOf(false) }
 
     LaunchedEffect(categories, isDragging) {
         if (!isDragging) {
@@ -505,6 +511,37 @@ fun SettingsScreen(
                     icon = Icons.Default.Info,
                     title = stringResource(id = R.string.about_dev_title)
                 ) {
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                text = stringResource(R.string.howto_settings_label),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text = stringResource(R.string.howto_settings_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        leadingContent = {
+                            Icon(
+                                imageVector = Icons.Outlined.MenuBook,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        trailingContent = {
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        modifier = Modifier.clickable { showHowToUse = true }
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                     Text(
                         text = stringResource(id = R.string.about_dev_settings_hint),
                         style = MaterialTheme.typography.bodyMedium,
@@ -597,6 +634,10 @@ fun SettingsScreen(
                 showNewCategoryColorDialog = false
             }
         )
+    }
+
+    if (showHowToUse) {
+        HowToUseBottomSheet(onDismiss = { showHowToUse = false })
     }
 }
 
