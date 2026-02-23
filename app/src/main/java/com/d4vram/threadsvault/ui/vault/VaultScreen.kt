@@ -4,6 +4,8 @@ import android.text.format.DateUtils
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -674,7 +676,9 @@ private fun EmptyVaultState(
     val iconTint = accentColor ?: MaterialTheme.colorScheme.primary
 
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         contentAlignment = Alignment.Center
     ) {
         Surface(
@@ -702,8 +706,8 @@ private fun EmptyVaultState(
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp)
                 ) {
                     Surface(
                         shape = RoundedCornerShape(999.dp),
@@ -725,8 +729,8 @@ private fun EmptyVaultState(
                             imageVector = Icons.Outlined.Inventory2,
                             contentDescription = null,
                             modifier = Modifier
-                                .padding(16.dp)
-                                .size(72.dp),
+                                .padding(14.dp)
+                                .size(60.dp),
                             tint = iconTint.copy(alpha = 0.72f)
                         )
                     }
