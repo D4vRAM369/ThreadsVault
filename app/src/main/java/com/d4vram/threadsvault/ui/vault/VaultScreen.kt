@@ -123,6 +123,8 @@ import com.d4vram.threadsvault.data.database.entity.CategoryEntity
 import com.d4vram.threadsvault.data.database.entity.PostEntity
 import com.d4vram.threadsvault.ui.components.CategoryColorPickerDialog
 import com.d4vram.threadsvault.ui.components.LinkifiedText
+import com.d4vram.threadsvault.ui.components.HowToUseBottomSheet
+import androidx.compose.material.icons.outlined.HelpOutline
 import com.d4vram.threadsvault.ui.components.parseHexColor
 import com.d4vram.threadsvault.ui.theme.VaultFavorite
 import com.d4vram.threadsvault.utils.MediaUrlsCodec
@@ -169,6 +171,7 @@ fun VaultScreen(
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var pendingCategoryDelete by remember { mutableStateOf<CategoryEntity?>(null) }
     var pendingCopiedUrl by remember { mutableStateOf<String?>(null) }
+    var showHowToUse by remember { mutableStateOf(false) }
     val deletedMessage = stringResource(id = R.string.post_deleted_message)
     val undoLabel = stringResource(id = R.string.undo_action)
     val copiedMessage = stringResource(id = R.string.url_copied_message)
@@ -523,7 +526,8 @@ fun VaultScreen(
                         }
                         EmptyVaultState(
                             modifier = Modifier.padding(bottom = 104.dp),
-                            accentColor = emptyAccent
+                            accentColor = emptyAccent,
+                            onShowHowToUse = { showHowToUse = true }
                         )
                     }
                     is VaultUiState.Error -> {
@@ -654,12 +658,17 @@ fun VaultScreen(
             }
         )
     }
+
+    if (showHowToUse) {
+        HowToUseBottomSheet(onDismiss = { showHowToUse = false })
+    }
 }
 
 @Composable
 private fun EmptyVaultState(
     modifier: Modifier = Modifier,
-    accentColor: androidx.compose.ui.graphics.Color? = null
+    accentColor: androidx.compose.ui.graphics.Color? = null,
+    onShowHowToUse: () -> Unit = {}
 ) {
     val container = accentColor ?: MaterialTheme.colorScheme.primaryContainer
     val iconTint = accentColor ?: MaterialTheme.colorScheme.primary
@@ -741,7 +750,32 @@ private fun EmptyVaultState(
                     color = MaterialTheme.colorScheme.secondary,
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                    SuggestionChip(
+                        onClick = onShowHowToUse,
+                        label = {
+                            Text(
+                                text = stringResource(R.string.howto_chip_label),
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.HelpOutline,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
+                            labelColor = MaterialTheme.colorScheme.secondary,
+                            iconContentColor = MaterialTheme.colorScheme.secondary
+                        ),
+                        border = SuggestionChipDefaults.suggestionChipBorder(
+                            enabled = true,
+                            borderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f)
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
             }
         }
         }
