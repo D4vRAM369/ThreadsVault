@@ -113,4 +113,8 @@
     <string name="howto_cta">Got it!</string>
     <string name="howto_settings_label">Usage guide</string>
     <string name="howto_settings_hint">Learn how to get the most out of ThreadsVault</string>
+    <string name="exit_selection_mode">Exit selection</string>
+    <string name="group_as_thread_action">Group as thread</string>
+    <string name="selection_count_label">%d selected</string>
+    <string name="thread_grouped_message">Posts grouped as thread</string>
 </resources>
