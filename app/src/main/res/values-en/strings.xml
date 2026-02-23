@@ -101,4 +101,16 @@
     <string name="manual_add_saved_message">Post saved to ThreadsVault</string>
     <string name="save_cancelled_message">Save canceled.</string>
     <string name="folder_selection_cancelled_message">Folder selection canceled.</string>
+    <!-- HowToUse BottomSheet -->
+    <string name="howto_chip_label">How does it work?</string>
+    <string name="howto_title">How to use ThreadsVault</string>
+    <string name="howto_step1_title">Save from Threads</string>
+    <string name="howto_step1_desc">Open any post in Threads, tap the Share button and select ThreadsVault. Content is extracted automatically.</string>
+    <string name="howto_step2_title">Add manually</string>
+    <string name="howto_step2_desc">Tap the "+ Add manually" button and paste the post URL directly.</string>
+    <string name="howto_step3_title">Organize and filter</string>
+    <string name="howto_step3_desc">Create categories with emoji and color. Use #hashtags in your notes to tag and search instantly.</string>
+    <string name="howto_cta">Got it!</string>
+    <string name="howto_settings_label">Usage guide</string>
+    <string name="howto_settings_hint">Learn how to get the most out of ThreadsVault</string>
 </resources>
