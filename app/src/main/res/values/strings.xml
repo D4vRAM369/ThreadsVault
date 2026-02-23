@@ -105,4 +105,16 @@
     <string name="group_as_thread_action">Agrupar como hilo</string>
     <string name="exit_selection_mode">Salir de seleccion</string>
     <string name="thread_grouped_message">Posts agrupados como hilo</string>
+    <!-- HowToUse BottomSheet -->
+    <string name="howto_chip_label">¿Cómo funciona?</string>
+    <string name="howto_title">Cómo usar ThreadsVault</string>
+    <string name="howto_step1_title">Guarda desde Threads</string>
+    <string name="howto_step1_desc">Abre cualquier post en Threads, toca el botón Compartir y selecciona ThreadsVault. El contenido se extrae automáticamente.</string>
+    <string name="howto_step2_title">Añade manualmente</string>
+    <string name="howto_step2_desc">Pulsa el botón "+ Agregar manualmente" e introduce la URL del post directamente.</string>
+    <string name="howto_step3_title">Organiza y filtra</string>
+    <string name="howto_step3_desc">Crea categorías con emoji y color. Usa #hashtags en tus notas para clasificar y buscar al instante.</string>
+    <string name="howto_cta">¡Entendido!</string>
+    <string name="howto_settings_label">Guía de uso</string>
+    <string name="howto_settings_hint">Aprende a sacar el máximo a ThreadsVault</string>
 </resources>
