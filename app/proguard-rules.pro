@@ -35,7 +35,6 @@
 -keepclassmembers class ** {
     @kotlinx.serialization.SerialName <fields>;
     kotlinx.serialization.KSerializer serializer(...);
-    synthetic kotlinx.serialization.internal.SerializationConstructorMarker;
 }
 
 
