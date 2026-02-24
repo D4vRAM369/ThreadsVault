@@ -1,19 +1,47 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    data_extraction_rules.xml — Android 12+ (API 31+)
+    Controla qué se incluye/excluye del backup de Google Cloud
+    y de las transferencias entre dispositivos (ej. setup wizard).
+
+    ThreadsVault es local-first: el usuario gestiona sus propios
+    backups via SAF. No enviamos datos a la nube de Google.
 -->
 <data-extraction-rules>
+
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
+        <!--
+            Excluir la base de datos Room completa.
+            Room crea tres archivos para cada BD:
+              - threadsvault_database        (archivo principal)
+              - threadsvault_database-shm    (memoria compartida)
+              - threadsvault_database-wal    (write-ahead log)
+            Los tres deben excluirse para evitar un backup corrupto
+            (restaurar solo el principal sin el WAL puede romper la BD).
         -->
+        <exclude domain="database" path="threadsvault_database"/>
+        <exclude domain="database" path="threadsvault_database-shm"/>
+        <exclude domain="database" path="threadsvault_database-wal"/>
+
+        <!--
+            Excluir las preferencias de DataStore.
+            Contienen: tema, URI de carpeta SAF, intervalo de backup,
+            estado de onboarding y orden de categorías.
+            Son preferencias de configuración local, no datos del usuario.
+        -->
+        <exclude domain="file" path="datastore/threadsvault_preferences.preferences_pb"/>
     </cloud-backup>
-    <!--
+
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <!--
+            En transferencias entre dispositivos (ej. configurar un
+            teléfono nuevo desde uno viejo), tampoco transferimos nada.
+            El usuario puede restaurar su backup SAF manualmente.
+        -->
+        <exclude domain="database" path="threadsvault_database"/>
+        <exclude domain="database" path="threadsvault_database-shm"/>
+        <exclude domain="database" path="threadsvault_database-wal"/>
+        <exclude domain="file" path="datastore/threadsvault_preferences.preferences_pb"/>
     </device-transfer>
-    -->
+
 </data-extraction-rules>
