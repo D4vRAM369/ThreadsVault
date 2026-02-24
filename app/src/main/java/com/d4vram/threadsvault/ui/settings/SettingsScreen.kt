@@ -123,7 +123,7 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     var showHowToUse by remember { mutableStateOf(false) }
 
-    LaunchedEffect(categories, isDragging) {
+    LaunchedEffect(categories) {
         if (!isDragging) {
             orderedCategories = categories
         }
