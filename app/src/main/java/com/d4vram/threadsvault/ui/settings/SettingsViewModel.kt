@@ -20,8 +20,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import com.d4vram.threadsvault.utils.applyCategoryOrder
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
@@ -51,8 +53,12 @@ class SettingsViewModel(context: Context) : ViewModel() {
     val autoBackupIntervalHours: StateFlow<Int> = preferences.autoBackupIntervalHoursFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 24)
 
-    val categories: StateFlow<List<CategoryEntity>> = categoryRepository.observeAll()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val categories: StateFlow<List<CategoryEntity>> = combine(
+        categoryRepository.observeAll(),
+        preferences.categoryOrderFlow
+    ) { cats, orderedIds ->
+        applyCategoryOrder(cats, orderedIds)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _saveDocumentEvents = MutableSharedFlow<SaveDocumentRequest>()
     val saveDocumentEvents = _saveDocumentEvents.asSharedFlow()
@@ -300,9 +306,7 @@ class SettingsViewModel(context: Context) : ViewModel() {
     fun updateCategoryOrder(orderedIds: List<Long>) {
         viewModelScope.launch {
             reorderMutex.withLock {
-                db.withTransaction {
-                    categoryRepository.reorderFromIds(orderedIds)
-                }
+                preferences.setCategoryOrder(orderedIds)
             }
         }
     }
