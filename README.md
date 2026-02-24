@@ -16,6 +16,51 @@
 
 ThreadsVault is an Android app for saving, organizing, and keeping your favorite Threads posts easily accessible in a local vault.
 
+## 📱 Screenshots
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/01_welcome.jpg" width="220"/>
+      <br/><sub><b>Welcome</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/02_privacy.jpg" width="220"/>
+      <br/><sub><b>100% Private & Local</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/03_share.jpg" width="220"/>
+      <br/><sub><b>Save from Threads</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/04_empty_state.jpg" width="220"/>
+      <br/><sub><b>Vault ready</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="screenshots/05_feed.jpg" width="220"/>
+      <br/><sub><b>Posts feed</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/06_post_detail.jpg" width="220"/>
+      <br/><sub><b>Post detail</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/07_categories.jpg" width="220"/>
+      <br/><sub><b>Custom categories</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/08_backup.jpg" width="220"/>
+      <br/><sub><b>Backup & SAF Autobackup</b></sub>
+    </td>
+  </tr>
+</table>
+
+</div>
+
 ## Why this app
 
 Threads in my experience, is quite good for discovering content, news, AI or programming tools (according to my personal preferences), and other interests.
