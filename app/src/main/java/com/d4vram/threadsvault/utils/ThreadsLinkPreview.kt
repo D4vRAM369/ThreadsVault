@@ -1,6 +1,5 @@
 package com.d4vram.threadsvault.utils
 
-import android.util.Log
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
@@ -44,8 +43,6 @@ object ThreadsLinkPreviewExtractor {
                 .timeout(10_000)
                 .get()
             extractFromDocument(url = url, document = document)
-        }.onFailure { e ->
-            Log.e("ThreadsExtractor", "Failed to extract from $url: ${e.message}", e)
         }.getOrDefault(
             ThreadsLinkPreview(
                 content = "",

@@ -1,13 +1,29 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    backup_rules.xml — Android 6 a 11 (API 23–31)
+    Para Android 12+ se usa data_extraction_rules.xml.
+    Tu minSdk es 26, así que este archivo cubre API 26–31.
+
+    ThreadsVault es local-first: el usuario gestiona sus propios
+    backups via SAF. No enviamos datos a la nube de Google.
 -->
 <full-backup-content>
+
     <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+        Excluir la base de datos Room completa.
+        Room crea tres archivos para cada BD:
+          - threadsvault_database        (archivo principal)
+          - threadsvault_database-shm    (memoria compartida)
+          - threadsvault_database-wal    (write-ahead log)
+    -->
+    <exclude domain="database" path="threadsvault_database"/>
+    <exclude domain="database" path="threadsvault_database-shm"/>
+    <exclude domain="database" path="threadsvault_database-wal"/>
+
+    <!--
+        Excluir las preferencias de DataStore.
+        En API 26–31, DataStore guarda en el directorio "files/datastore/".
+    -->
+    <exclude domain="file" path="datastore/threadsvault_preferences.preferences_pb"/>
+
 </full-backup-content>
