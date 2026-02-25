@@ -14,7 +14,50 @@
   <a href="./README.md">Read in English</a>
 </p>
 
-ThreadsVault es una app Android para guardar, organizar y tener a mano tus posts favoritos de Threads en una bóveda local.
+## 📱 Capturas de pantalla
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/01_welcome.jpg" width="220"/>
+      <br/><sub><b>Welcome</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/02_privacy.jpg" width="220"/>
+      <br/><sub><b>100% Private & Local</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/03_share.jpg" width="220"/>
+      <br/><sub><b>Save from Threads</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/04_empty_state.jpg" width="220"/>
+      <br/><sub><b>Vault ready</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="screenshots/05_feed.jpg" width="220"/>
+      <br/><sub><b>Posts feed</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/06_post_detail.jpg" width="220"/>
+      <br/><sub><b>Post detail</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/07_categories.jpg" width="220"/>
+      <br/><sub><b>Custom categories</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/08_backup.jpg" width="220"/>
+      <br/><sub><b>Backup & SAF Autobackup</b></sub>
+    </td>
+  </tr>
+</table>
+
+</div>
 
 ## Por qué existe
 
@@ -39,13 +82,15 @@ Por ello he decidido crear una app para Android con una bóveda donde poder envi
 - Autobackup con selección de carpeta SAF.
 - Tema claro, oscuro o sistema.
 - Tutorial "Cómo usar" integrado en la app.
+  
+## Compatibilidad experimental con Instagram (observada)
 
-## Sobre el Dev
+ThreadsVault extrae parcialmente el contenido de algunos enlaces de publicaciones públicas de Instagram (observado durante las pruebas). Todavía no se trata de una compatibilidad oficial completa con Instagram.
 
-Este proyecto ha sido creado por **D4vRAM**, para y por la comunidad open source, con amor ❤️.
-Este proyecto ha sido creado mediante **PBL (Aprendizaje Basado en Proyectos)**, usando a la IA como mentora en un proceso de aprendizaje constante, como lo es con cada proyecto que realizo. Transformando ideas y soluciones a problemas en código.
-
-<sub><em>"No usar la IA para programar hoy en día es como ser agricultor y no querer usar el tractor."</em></sub>
+  Comportamiento conocido:
+  - El autor del encabezado puede aparecer como «@unknown»
+  - El recuento de «Me gusta», la fecha de publicación, el nombre de usuario, el enlace de la publicación y a veces, una vista previa de la imagen pueden aparecer en el contenido extraído (normalmente como texto de metadatos)
+  - Los resultados pueden variar en función de la publicación o el enlace.
 
 ## Privacidad
 
@@ -97,13 +142,19 @@ Comandos:
 
 - Convertirlo en programa o PWA disponible para usar en Windows y Linux más adelante.
 - Flavor FOSS de OCR para distribuciones sin Google (IzzyDroid lo requiere y me gustaría subirlo ahí), además de que va con mi ideología como desarrollador y será bueno para subir la aplicación a otros sitios de código abierto.
-- Mejor UX de import/export.
-- Más filtros y organización inteligente.
+- Mejorar import/export.
+- Mejorar filtros y organización más inteligente.
+- Intentar mejorar e implementar la compatibilidad experimental actual con Instagram _(solo un quizás)_.
+- Añadir un reproductor de vídeo integrado en la app (si es posible) y permitir la descarga de vídeos.
 - Nuevas funciones que irán surgiendo sobre la marcha en cualquier momento, y en mis sesiones de estudio PBL de horas interminables con diferentes IAs y herramientas.
 
-## Autor
+## Sobre el Dev
 
-*Creado por [D4vRAM369](https://github.com/D4vRAM369) durante sesiones PBL, usando IA como guía.*
+Este proyecto ha sido creado por **D4vRAM** mediante **PBL (Aprendizaje Basado en Proyectos)**, usando a la IA como mentora en un proceso de aprendizaje constante, como lo es con cada proyecto que realizo. Transformando ideas y soluciones a problemas en código.
+
+Para y por la comunidad open source, con amor ❤️
+
+<sub><em>"No usar la IA para programar hoy en día es como ser agricultor y no querer usar el tractor."</em></sub>
 
 ~
 

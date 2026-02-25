@@ -7,9 +7,17 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+concurrency:
+  group: android-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -25,11 +33,28 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Lint debug
-        run: ./gradlew lintDebug
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
-      - name: Unit tests
-        run: ./gradlew testDebugUnitTest
+      - name: Lint, test and assemble
+        run: ./gradlew --stacktrace lintDebug testDebugUnitTest :app:assembleDebug :app:assembleRelease
 
-      - name: Assemble debug and release
-        run: ./gradlew :app:assembleDebug :app:assembleRelease
+      - name: Upload APK artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-apks
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+          if-no-files-found: ignore
+
+      - name: Upload reports (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-reports
+          path: |
+            app/build/reports/**
+            app/build/test-results/**
+          if-no-files-found: ignore

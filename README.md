@@ -16,6 +16,51 @@
 
 ThreadsVault is an Android app for saving, organizing, and keeping your favorite Threads posts easily accessible in a local vault.
 
+## 📱 Screenshots
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/01_welcome.jpg" width="220"/>
+      <br/><sub><b>Welcome</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/02_privacy.jpg" width="220"/>
+      <br/><sub><b>100% Private & Local</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/03_share.jpg" width="220"/>
+      <br/><sub><b>Save from Threads</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/04_empty_state.jpg" width="220"/>
+      <br/><sub><b>Vault ready</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="screenshots/05_feed.jpg" width="220"/>
+      <br/><sub><b>Posts feed</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/06_post_detail.jpg" width="220"/>
+      <br/><sub><b>Post detail</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/07_categories.jpg" width="220"/>
+      <br/><sub><b>Custom categories</b></sub>
+    </td>
+    <td align="center">
+      <img src="screenshots/08_backup.jpg" width="220"/>
+      <br/><sub><b>Backup & SAF Autobackup</b></sub>
+    </td>
+  </tr>
+</table>
+
+</div>
+
 ## Why this app
 
 Threads in my experience, is quite good for discovering content, news, AI or programming tools (according to my personal preferences), and other interests.
@@ -40,13 +85,15 @@ For this reason, I decided to create an Android app with a vault where I can sen
 - Light, dark, and system theme.
 - Built-in "How to use" tutorial.
 
-## About the Dev
+## Experimental Instagram Compatibility (Observed)
 
-This project was created by **D4vRAM**, for and by the open-source community, with love ❤️.
-This project was built through **PBL (Project-Based Learning)**, using AI as a mentor in a constant learning process, as it is with every project I create. Transforming ideas and solutions to problems into code.
+ThreadsVault partially extract content from some public Instagram post links (observed during testing). This is not official full Instagram support yet.
 
-<sub><em>"Not using AI to program nowadays is like being a farmer and refusing to use a tractor."</em></sub>
-
+  Known behavior:
+  - Header author may appear as `@unknown`
+  - Likes count, publication date, username, post link, and sometimes an image preview may appear in the extracted content (usually as
+  metadata text)
+  - Results may vary depending on the post/link.
 
 ## Privacy
 
@@ -60,6 +107,7 @@ This project was built through **PBL (Project-Based Learning)**, using AI as a m
 
 - Video extraction is still limited compared to image/OCR support.
 - OCR quality depends on the source image quality and text clarity.
+- Just extract one picture for post (if you want extract more than one, share the picture as a post and mix it with original one).
 
 ## Tech stack
 
@@ -100,15 +148,20 @@ Release artifact output:
 
 ## Roadmap ideas
 
-- Convert it into a program or PWA available for use on Windows and Linux in the future.
+- Expand it into a desktop app and/or PWA for Windows and Linux.
 - FOSS OCR version for non-Google distributions (IzzyDroid requires it, and I would like to upload it there). It also fits with my ideology as a developer and will be beneficial for uploading the application to other open-source sites.
-- Better import/export UX.
-- More filtering and smart organization tools.
-- Maybe upload it to Google Play Store in the future.
+- Improve import/export UX.
+- Add more filtering and smarter organization tools.
+- Consider publishing it on Google Play Store in the future.
+- Improve and formalize the current experimental Instagram compatibility.
+- Add an in-app video viewer (if feasible) and support downloading videos.
 
-## Author
+## About the Dev
 
-*Created by [D4vRAM369](https://github.com/D4vRAM369) during PBL sessions, using AI as a guide.*
+This project was created by **D4vRAM**, for and by the open-source community, with love ❤️.
+This project was built through **PBL (Project-Based Learning)**, using AI as a mentor in a constant learning process, as it is with every project I create. Transforming ideas and solutions to problems into code.
+
+<sub><em>"Not using AI to program nowadays is like being a farmer and refusing to use a tractor."</em></sub>
 
 ~
 
