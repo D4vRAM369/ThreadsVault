@@ -104,8 +104,9 @@ ThreadsVault extrae parcialmente el contenido de algunos enlaces de publicacione
 
 ## Limitaciones (v1.0.0)
 
-- La extracción de vídeos es limitada respecto al soporte de imágenes y OCR.
+- Los vídeos de Threads usan enlaces que expiran y requieren sesión activa; la app detecta si un post tiene vídeo y guarda el enlace para abrirlo en Threads, pero no puede reproducirlo ni almacenarlo localmente.
 - La calidad del OCR depende de la resolución y claridad del texto en la imagen fuente.
+- Solo extrae una imagen para la publicación (si deseas extraer más de una, comparte la imagen como una publicación y mézclala con la original).
 - La importación de backups desde ThreadsVault Desktop aún no está soportada *(Desktop → Android)*; se resolverá en una versión futura.
 
 ## Stack técnico
