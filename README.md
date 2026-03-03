@@ -82,7 +82,7 @@ For this reason, I decided to create an Android app with a vault where I can sen
 - Categories with emoji and color, with dynamic-contrast filter chips.
 - Favorites and search.
 - Export to CSV and PDF.
-- Backup and restore (JSON/CSV).
+- Backup and restore (JSON/CSV). Backups from this app can be imported into [ThreadsVault Desktop](https://github.com/D4vRAM369/threadsvault-desktop) *(Android → Desktop ✅)*. The reverse direction is not yet supported.
 - Auto-backup with SAF folder selection.
 - Light, dark, and system theme.
 - Built-in "How to use" tutorial.
@@ -110,6 +110,7 @@ ThreadsVault partially extract content from some public Instagram post links (ob
 - Video extraction is still limited compared to image/OCR support.
 - OCR quality depends on the source image quality and text clarity.
 - Just extract one picture for post (if you want extract more than one, share the picture as a post and mix it with original one).
+- Importing backups from ThreadsVault Desktop is not yet supported (Desktop → Android); this will be resolved in a future version.
 
 ## Tech stack
 
