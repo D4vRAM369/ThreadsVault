@@ -80,7 +80,7 @@ Por ello he decidido crear una app para Android con una bóveda donde poder envi
 - Categorías con emoji y color, con chips de contraste dinámico.
 - Favoritos y buscador.
 - Exportar a CSV y PDF.
-- Backup y restore (JSON/CSV).
+- Backup y restore (JSON/CSV). Los backups de esta app se pueden importar en [ThreadsVault Desktop](https://github.com/D4vRAM369/threadsvault-desktop) *(Android → Desktop ✅)*. La dirección inversa aún no está soportada.
 - Autobackup con selección de carpeta SAF.
 - Tema claro, oscuro o sistema.
 - Tutorial "Cómo usar" integrado en la app.
@@ -106,6 +106,7 @@ ThreadsVault extrae parcialmente el contenido de algunos enlaces de publicacione
 
 - La extracción de vídeos es limitada respecto al soporte de imágenes y OCR.
 - La calidad del OCR depende de la resolución y claridad del texto en la imagen fuente.
+- La importación de backups desde ThreadsVault Desktop aún no está soportada *(Desktop → Android)*; se resolverá en una versión futura.
 
 ## Stack técnico
 
