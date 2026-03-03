@@ -14,6 +14,8 @@
   <a href="./README.md">Read in English</a>
 </p>
 
+> 🖥️ También disponible para escritorio: **[ThreadsVault Desktop](https://github.com/D4vRAM369/threadsvault-desktop)** — app nativa para Windows y Linux, compatible con los backups de esta app.
+
 ## 📱 Capturas de pantalla
 
 <div align="center">
@@ -140,7 +142,7 @@ Comandos:
 
 ## Ideas de roadmap
 
-- Convertirlo en programa o PWA disponible para usar en Windows y Linux más adelante.
+- ✅ Versión de escritorio disponible para Windows y Linux: [ThreadsVault Desktop](https://github.com/D4vRAM369/threadsvault-desktop)
 - Flavor FOSS de OCR para distribuciones sin Google (IzzyDroid lo requiere y me gustaría subirlo ahí), además de que va con mi ideología como desarrollador y será bueno para subir la aplicación a otros sitios de código abierto.
 - Mejorar import/export.
 - Mejorar filtros y organización más inteligente.

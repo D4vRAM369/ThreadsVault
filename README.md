@@ -16,6 +16,8 @@
 
 ThreadsVault is an Android app for saving, organizing, and keeping your favorite Threads posts easily accessible in a local vault.
 
+> 🖥️ Also available for desktop: **[ThreadsVault Desktop](https://github.com/D4vRAM369/threadsvault-desktop)** — native app for Windows & Linux, backup-compatible with this app.
+
 ## 📱 Screenshots
 
 <div align="center">
@@ -148,7 +150,7 @@ Release artifact output:
 
 ## Roadmap ideas
 
-- Expand it into a desktop app and/or PWA for Windows and Linux.
+- ✅ Desktop app available for Windows and Linux: [ThreadsVault Desktop](https://github.com/D4vRAM369/threadsvault-desktop)
 - FOSS OCR version for non-Google distributions (IzzyDroid requires it, and I would like to upload it there). It also fits with my ideology as a developer and will be beneficial for uploading the application to other open-source sites.
 - Improve import/export UX.
 - Add more filtering and smarter organization tools.
