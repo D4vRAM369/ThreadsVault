@@ -107,7 +107,7 @@ ThreadsVault partially extract content from some public Instagram post links (ob
 
 ## Limitations (v1.0.0)
 
-- Video extraction is still limited compared to image/OCR support.
+- Threads videos use links that expire and require an active session; the app detects if a post has a video and saves the link to open it in Threads, but it cannot play or store it locally.
 - OCR quality depends on the source image quality and text clarity.
 - Just extract one picture for post (if you want extract more than one, share the picture as a post and mix it with original one).
 - Importing backups from ThreadsVault Desktop is not yet supported (Desktop → Android); this will be resolved in a future version.
